@@ -817,9 +817,9 @@ button:active,
 <body>
     <div id="game-container">
 <div id="bridge-view">
-    <div class="rating-badge-mini">
-        <span>전체이용가</span>
-    </div>
+  <div class="rating-badge-mini" style="display:none;">
+    <span>전체이용가</span>
+</div>
 
     <div class="bridge-content">
         <div class="bridge-logo">
@@ -848,9 +848,9 @@ button:active,
 <div id="intro-layer" onclick="startGame()">
     <img src="assets/intro_bg.png" class="intro-bg" alt="배경">
     
-    <div class="rating-badge-mini">
-        <img src="assets/grac_all.png" alt="전체이용가"> 
-    </div>
+<div class="rating-badge-mini" style="display:none;">
+    <img src="assets/grac_all.png" alt="전체이용가"> 
+</div>
 
     <div class="logo-container">
         <img src="assets/intro_logo.png" class="intro-logo" alt="로고">
@@ -860,7 +860,7 @@ button:active,
 </div>
 
         <div id="ui-layer" style="display:none;">
-            <button class="debug-btn" onclick="testEnding()">🎬 엔딩 테스트</button>
+            <button class="debug-btn" style="display:none;" onclick="testEnding()">🎬 엔딩 테스트</button>
 
 <div class="top-bar">
     <div class="top-row">
@@ -909,8 +909,7 @@ button:active,
         </div>
 
         <div id="phase2-ui-layer">
-            <button class="debug-btn" style="top: 280px; background: rgba(50, 100, 255, 0.8);" onclick="testNextTier()">🚀 티어 상승 (테스트)</button>
-
+           <button class="debug-btn" style="display:none; top: 280px; background: rgba(50, 100, 255, 0.8);" onclick="testNextTier()">🚀 티어 상승 (테스트)</button>
 <div class="top-bar">
     <div class="top-row">
         <button class="btn-gear" onclick="openPopup('settings-popup')">⚙️</button>
