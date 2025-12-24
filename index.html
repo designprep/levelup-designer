@@ -4414,6 +4414,10 @@ function adjustCharacterSize(sprite, w, h) {
     // 4. 고정
     sprite.setScrollFactor(0);
 }
+if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Registered'));
+    }
  </script>
 </body>
 </html>
