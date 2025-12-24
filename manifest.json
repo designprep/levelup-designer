@@ -1,22 +1,17 @@
 {
-  "name": "레벨 업! 디자이너",
-  "short_name": "디자이너 키우기",
+  "name": "레벨업 디자이너",
+  "short_name": "LevelUp",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#191F28",
   "theme_color": "#191F28",
-  "description": "신입 디자이너부터 전설의 디자이너까지! 리얼한 디자이너 육성 시뮬레이션.",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/icon_192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icon_512.png",
+      "src": "icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
