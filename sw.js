@@ -1,5 +1,5 @@
 // 캐시 이름
-const CACHE_NAME = 'levelup-designer-v1';
+const CACHE_NAME = 'levelup-designer-v2';
 
 // 캐싱할 파일 목록
 const urlsToCache = [
