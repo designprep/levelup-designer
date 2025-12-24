@@ -1,26 +1,29 @@
-// 캐시 이름
-const CACHE_NAME = 'levelup-designer-v2';
+// 캐시 이름 (이건 그냥 형식상 둠)
+const CACHE_NAME = 'levelup-designer-nocache';
 
-// 캐싱할 파일 목록
-const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.png'
-];
-
-// 설치 시 캐싱
+// 설치 단계: 그냥 통과
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+    self.skipWaiting(); // 대기 없이 바로 작동
 });
 
-// 요청 시 캐시에서 반환
+// 활성화 단계: 기존 캐시 싹 지워버림 (중요!)
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => caches.delete(cacheName))
+            );
+        })
+    );
+});
+
+// 데이터 요청 단계: 캐시 안 보고 무조건 인터넷에서 새로 가져옴 (Network Only)
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+    event.respondWith(
+        fetch(event.request)
+            .catch(() => {
+                // 인터넷 끊겼을 때만 캐시 확인 (혹시 모르니)
+                return caches.match(event.request);
+            })
+    );
 });
