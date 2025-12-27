@@ -193,7 +193,7 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
         /* [2. 메뉴 버튼] */
        .menu-bar { 
             position: absolute; 
-            bottom: 250px; 
+            bottom: 280px; 
             left: 0;       
             width: 100%;   
             
@@ -816,23 +816,7 @@ button:active,
 </head>
 <body>
     <div id="game-container">
-<div id="bridge-view">
-  <div class="rating-badge-mini" style="display:none;">
-    <span>전체이용가</span>
-</div>
 
-    <div class="bridge-content">
-        <div class="bridge-logo">
-            <img src="icon.png" onerror="this.style.display='none'; document.getElementById('temp-icon').style.display='block';" alt="로고">
-            <span id="temp-icon" style="display:none; font-size: 40px;">🎨</span>
-        </div>
-
-        <h2 class="bridge-text">
-            <span class="highlight">레벨 업! 디자이너</span><br>
-            접속 중...
-        </h2>
-    </div>
-</div>
 <div id="custom-alert-overlay">
     <div id="custom-alert-box">
         <div id="custom-alert-msg">알림 내용</div>
@@ -860,7 +844,7 @@ button:active,
 </div>
 
         <div id="ui-layer" style="display:none;">
-            <button class="debug-btn" style="display:none;" onclick="testEnding()">🎬 엔딩 테스트</button>
+            <button class="debug-btn" style="display:block;" onclick="testEnding()">🎬 엔딩 테스트</button>
 
 <div class="top-bar">
     <div class="top-row">
@@ -909,7 +893,7 @@ button:active,
         </div>
 
         <div id="phase2-ui-layer">
-           <button class="debug-btn" style="display:none; top: 280px; background: rgba(50, 100, 255, 0.8);" onclick="testNextTier()">🚀 티어 상승 (테스트)</button>
+           <button class="debug-btn" style="display:block; top: 280px; background: rgba(50, 100, 255, 0.8);" onclick="testNextTier()">🚀 티어 상승 (테스트)</button>
 <div class="top-bar">
     <div class="top-row">
         <button class="btn-gear" onclick="openPopup('settings-popup')">⚙️</button>
@@ -1275,6 +1259,21 @@ button:active,
         <button id="tuto-btn" class="tuto-next-btn" onclick="nextTutorialLine()"></button>
     </div>
 </div>
+<div id="cheat-panel" style="position: absolute; top: 90px; left: 10px; z-index: 99999; display: flex; flex-direction: column; gap: 6px;">
+    <button onclick="cheatLevelUp()" style="background:rgba(0,0,0,0.8); color:#fff; border:1px solid #9956DE; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+        🆙 스킬 +100
+    </button>
+    
+    <button onclick="cheatMoney()" style="background:rgba(0,0,0,0.8); color:#fff; border:1px solid #FFD700; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+        💰 월급
+    </button>
+
+    <button onclick="cheatHp()" style="background:rgba(0,0,0,0.8); color:#fff; border:1px solid #4CD964; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+        ❤️ 체력 풀회복
+    </button>
+
+    <button onclick="toggleCheatPanel()" style="background:#555; color:#aaa; border:none; padding:0; height:10px; border-radius:4px; margin-top:2px; cursor:pointer;"></button>
+</div>
     </div>
 
     <script>
@@ -1468,7 +1467,7 @@ const interviewData = [
 
         const GameConfig = { initialMoney: 500000, workCost: 5000, workStamina: 30, deadlineRange: [16, 24], crisisChance: 0.03 };
 const shopItems = [
-    // [Tier 1~3: 기존 100% 유지]
+    // [Tier 1~3: 기존 유지] 초반 성장 구간
     {id:1, name:"기본 마우스", cost:10000, power:1.5, img:"item_mouse_basic.png", desc:"다이소 에디션"}, 
     {id:2, name:"게이밍 마우스", cost:50000, power:2, img:"item_mouse_game.png", desc:"RGB 감성"}, 
     {id:3, name:"매직 트랙패드", cost:150000, power:3, img:"item_trackpad.png", desc:"손목 보호"}, 
@@ -1479,19 +1478,24 @@ const shopItems = [
     {id:8, name:"아이맥 프로", cost:5000000, power:12, img:"item_imac.png", desc:"전문가 도구"}, 
     {id:9, name:"허먼밀러 의자", cost:10000000, power:20, img:"item_chair.png", desc:"구름 위"},
 
-    // [Tier 4: Global 구간 (주급 1,500만)]
-    // 목표: 4주 ~ 40주(10달) 저축
-    {id:10, name:"개인 비서 고용", cost:60000000, power:120, img:"char_secretary.png", desc:"스케줄 관리 혁명 (6천만)"},
-    {id:11, name:"고급 세단", cost:200000000, power:250, img:"item_luxury_sedan.png", desc:"도로 위의 정숙함 (2억)"},
-    {id:12, name:"강남 오피스텔 전세", cost:600000000, power:500, img:"bg_studio_apartment.png", desc:"직주근접 실현 (6억)"},
-    {id:13, name:"슈퍼카", cost:1500000000, power:800, img:"item_supercar.png", desc:"압도적 하차감 (15억)"},
+    // [Tier 4: Global 구간] 가격 소폭 상향 (중반 허리)
+    {id:10, name:"개인 비서 고용", cost:100000000, power:120, img:"char_secretary.png", desc:"스케줄 관리 혁명 (1억)"},
+    {id:11, name:"고급 세단", cost:500000000, power:250, img:"item_luxury_sedan.png", desc:"도로 위의 정숙함 (5억)"},
+    {id:12, name:"강남 오피스텔", cost:2000000000, power:500, img:"bg_studio_apartment.png", desc:"직주근접 실현 (20억)"},
+    {id:13, name:"슈퍼카", cost:5000000000, power:800, img:"item_supercar.png", desc:"압도적 하차감 (50억)"},
 
-    // [Tier 5: Space 구간 (주급 1.5억)]
-    // 목표: 30주 ~ 200주(4년) 저축 -> 진정한 엔드 콘텐츠
-    {id:14, name:"개인 전세기", cost:5000000000, power:2000, img:"item_private_jet.png", desc:"해외 미팅 당일치기 (50억)"},
-    {id:15, name:"개인용 양자 컴퓨터", cost:10000000000, power:5000, img:"item_quantum_pc.png", desc:"렌더링 시간 0초 (100억)"},
-    {id:16, name:"AI 수트 'Mark PD'", cost:20000000000, power:10000, img:"item_design_suit.png", desc:"자비스 탑재 (200억)"},
-    {id:17, name:"달 기지 별장", cost:30000000000, power:25000, img:"bg_moon_base.png", desc:"지구가 너무 좁다 (300억)"}
+    // [Tier 5: Space 구간] ★ 엔드 게임 밸런스 패치 (10배~20배 상향)
+    // 기존 50억 -> 500억
+    {id:14, name:"개인 전세기", cost:50000000000, power:2000, img:"item_private_jet.png", desc:"해외 미팅 당일치기 (500억)"},
+    
+    // 기존 100억 -> 1,000억
+    {id:15, name:"개인용 양자 컴퓨터", cost:100000000000, power:5000, img:"item_quantum_pc.png", desc:"렌더링 시간 0초 (1,000억)"},
+    
+    // 기존 200억 -> 2,000억
+    {id:16, name:"AI 수트 'Mark PD'", cost:200000000000, power:10000, img:"item_design_suit.png", desc:"자비스 탑재 (2,000억)"},
+    
+    // ★ 최종: 기존 300억 -> 5,000억 (월급만으론 40년 걸림)
+    {id:17, name:"달 기지 별장", cost:500000000000, power:25000, img:"bg_moon_base.png", desc:"지구가 너무 좁다 (5,000억)"}
 ];
 const msgs = { 
     // [기존 업무 멘트 유지]
@@ -2177,8 +2181,6 @@ window.applyJob = function(name, req, tier) {
             // 여기서는 기존 adjustCharacterSize 비율을 따르도록 설정
             adjustCharacterSize(charHoodieSprite, sceneContext.scale.width, sceneContext.scale.height);
             
-            // 위치 미세 조정 (엔딩이니까 중앙에 딱)
-            charHoodieSprite.setPosition(centerX, centerY + (sceneContext.scale.height * 0.05));
         },
         onComplete: () => {
             flash.destroy();
@@ -2223,17 +2225,14 @@ window.applyJob = function(name, req, tier) {
             player.isBusy = false;
         }
         
-  // [Ver 69.2 Fix] B급 프로젝트 기한 연장 (6~7일)
+// [수정] 프로젝트 할당 (AI 라이벌 'Alpha-D' 난입 시스템 추가)
 function assignProject() {
     const tiers = ['S', 'A', 'B'];
     const tier = tiers[Math.floor(Math.random()*tiers.length)]; 
     const pool = projectPools[player.tier] || projectPools['Agency'];
     const theme = pool[Math.floor(Math.random()*pool.length)];
     
-    // [수정] 마감 기한 조정
-    // S급: 10~11일 (유지)
-    // A급: 8~9일 (유지)
-    // B급: 6~7일 (기존 5~6일에서 +1일 상향) -> 이제 사이클상 클리어 가능
+    // 마감 기한 설정
     let dead = 0;
     if (tier === 'S') dead = Math.floor(Math.random() * 3) + 8;
     else if (tier === 'A') dead = Math.floor(Math.random() * 2) + 8;
@@ -2241,12 +2240,26 @@ function assignProject() {
     
     // 버프 타입 판별
     let type = 'fame'; 
-    if (theme.includes("쇼핑") || theme.includes("광고") || theme.includes("전단") || 
-        theme.includes("상세") || theme.includes("커머스") || theme.includes("금융")) type = 'wealth';
-    else if (theme.includes("앱") || theme.includes("시스템") || theme.includes("UX") || 
-             theme.includes("GUI") || theme.includes("OS") || theme.includes("인터페이스") || 
-             theme.includes("플랫폼") || theme.includes("게임")) type = 'speed';
+    if (theme.includes("쇼핑") || theme.includes("광고") || theme.includes("금융")) type = 'wealth';
+    else if (theme.includes("앱") || theme.includes("시스템") || theme.includes("게임")) type = 'speed';
     
+    // ★★★ [신규] 라이벌 등장 체크 (Global 이상, 20% 확률) ★★★
+    let isRivalMatch = false;
+    let rivalScoreTarget = 0;
+    let rivalName = "";
+
+    if ((player.tier === 'Global' || player.tier === 'Space') && Math.random() < 0.2) {
+        isRivalMatch = true;
+        rivalName = "🤖 Alpha-D";
+        
+        // 라이벌 목표 점수: 현재 내 최고 기록보다 조금 높게 설정 (긴장감)
+        // 최소 1000점 ~ 내 최고점수의 1.1배 사이
+        let base = Math.max(1000, player.bestPortfolioScore);
+        rivalScoreTarget = Math.floor(base * (0.9 + Math.random() * 0.3)); 
+        
+        alert(`🚨 [긴급] 경쟁사 AI '${rivalName}'가 입찰에 참여했습니다!\n\n목표: AI의 점수(${rivalScoreTarget}점)를 넘겨야만 승인됩니다.\n(패배 시 보상 없음)`);
+    }
+
     player.currentProject = {
         name: `${theme}`,
         tier: tier,
@@ -2260,15 +2273,17 @@ function assignProject() {
         progMult: 1.0, 
         costMult: 1.0,
         strategyName: "미정",
-        buffType: type 
+        buffType: type,
+        // 라이벌 정보 저장
+        isRival: isRivalMatch,
+        rivalName: rivalName,
+        rivalTarget: rivalScoreTarget
     };
     
-    let hint = "";
-    if(type === 'wealth') hint = "(💰연봉 특화)";
-    else if(type === 'speed') hint = "(⚡속도 특화)";
-    else hint = "(🎖️성과 특화)";
-
-    showP2Log(`[${player.tier}] 신규 ${tier}급 업무 할당! (마감 D-${dead})`);
+    let logMsg = `[${player.tier}] 신규 ${tier}급 업무 할당! (마감 D-${dead})`;
+    if(isRivalMatch) logMsg = `🔥 VS Alpha-D 경쟁 프로젝트 시작! (목표: ${rivalScoreTarget}점)`;
+    
+    showP2Log(logMsg);
 }
 
   // [Ver 82.1 Fix] 에이전시 20 고정 + 상위 티어 소모량 완화
@@ -2295,13 +2310,6 @@ window.doP2Work = function() {
     // [수정] 체력 비용 밸런스 조정
     // 에이전시는 20으로 유지하되, 상위 구간 상승폭을 줄임 (2씩 증가)
     let baseCost = 20; 
-    
-    if(player.tier === 'Agency') baseCost = 20;       // 5회 (딱 적당함)
-    else if(player.tier === 'TopTier') baseCost = 22; // 4.5회
-    else if(player.tier === 'Unicorn') baseCost = 24; // 4회
-    else if(player.tier === 'Global') baseCost = 26;  // 3.8회
-    else if(player.tier === 'Space') baseCost = 28;   // 3.5회 (기존 40 대비 대폭 완화)
-
     let mult = player.currentProject.costMult || 1.0;
     let finalCost = Math.floor(baseCost * mult);
 
@@ -2340,13 +2348,12 @@ function realWork(progMult, finalCost, strategyName) {
       // [수정된 난이도 밸런스]
 // 기존보다 전반적으로 상향하여 성취감을 높임
 const tierCoef = { 
-    Agency: 3,      // 기존 2 -> 3 (기초 체력 요구)
-    TopTier: 5.5,     // 기존 5 -> 8 (본격적인 업무)
-    Unicorn: 12,    // 기존 15 -> 22 (스펙업 필수)
-    Global: 20,     // 기존 25 -> 45 (엘리트 코스)
-    Space: 45      // 기존 80 -> 100 (탈지구급 난이도)
+    Agency: 3,      
+    TopTier: 5.5,     
+    Unicorn: 10,    
+    Global: 15,     
+    Space: 25      
 };
-
 let baseDiff = tierCoef[player.tier] || 3;
 
 // ★ [핵심 수정] 직급 패널티 하향 (기존 0.35 -> 0.25)
@@ -2356,7 +2363,7 @@ let baseDiff = tierCoef[player.tier] || 3;
 
 let difficulty = Math.floor(baseDiff * rankDiffMult);
 
-        let base = 5; 
+        let base = 30; 
         let statBonus = Math.floor(player.designStat * 0.06); 
         let itemBonus = player.currentPower || 0;
         let totalPower = base + statBonus + itemBonus;
@@ -2395,41 +2402,11 @@ let difficulty = Math.floor(baseDiff * rankDiffMult);
         }
     });
 }
- // [Ver 69.3 Fix] 승진 난이도 완화 (대리 0.75 / 팀장 0.5)
+// [수정] 프로젝트 완료 (AI 라이벌 + 신입 가산점 + S급 대박/쪽박 연출 복구)
 function completeProject() {
     let tier = player.currentProject.tier;
     
-    // 1. 기본 승진 점수 (Base Promo)
-    let basePromo = tier === 'S' ? 20 : (tier === 'A' ? 10 : 5);
-    
-    // 2. 직급별/상황별 배율 계산
-    let rankMult = 1.0;
-
-    if (player.rank === 0) {
-        // [신입 사원 로직 유지]
-        // 반려 이력 있으면 1.0, 없으면 티어별 차등(Global은 1.0)
-        if (player.currentProject.isExtended) {
-            rankMult = 1.0; 
-        } else {
-            if (player.tier === 'Global' || player.tier === 'Space') rankMult = 1.0; 
-            else if (player.tier === 'Unicorn') rankMult = 1.1; 
-            else rankMult = 1.2; 
-        }
-    } else {
-        // [수정] 대리/팀장급 성과 인정 비율 상향 (병목 해소)
-        if (player.rank === 1) {
-            rankMult = 0.75; // 대리: 0.6 -> 0.75 (25% 상향)
-        } else if (player.rank === 2) {
-            rankMult = 0.5;  // 팀장: 0.4 -> 0.5 (소폭 상향)
-        } else if (player.rank === 3) {
-            rankMult = 0.25; // 이사: 0.2 -> 0.25 (미세 조정)
-        }
-    }
-    
-    // 최종 승진 점수 계산 (반올림 처리)
-    let finalPromo = Math.max(1, Math.round(basePromo * rankMult));
-
-    // 3. 점수(Score) 계산 (기존 유지)
+    // 1. 점수(Score) 기초 계산
     let tierMult = 1;
     if (player.tier === 'Space') tierMult = 50;
     else if (player.tier === 'Global') tierMult = 20;
@@ -2439,19 +2416,75 @@ function completeProject() {
     let baseScore = (tier === 'S' ? 500 : (tier === 'A' ? 300 : 100));
     let rawScore = baseScore * tierMult;
 
-    let randomFactor = 1.0; 
+    // ★★★ [복구] 대박(Viral) 확률 및 랜덤 변수 계산 ★★★
+    // 기본 랜덤: 0.8 ~ 1.2
+    let randomFactor = 0.8 + (Math.random() * 0.4); 
     let isViral = false;
+
+    // S급일 때 10% 확률로 '대박' 터짐 (배율 대폭 상승)
     if (tier === 'S') {
-        randomFactor = 0.8 + (Math.random() * 0.4); 
-        if (Math.random() < 0.1) { isViral = true; randomFactor += 0.3; }
+        if (Math.random() < 0.1) { 
+            isViral = true; 
+            randomFactor += 0.3; // 1.1 ~ 1.5배까지 뻥튀기
+        }
     }
-    
+
+    // 최종 점수 계산
     let rankBonus = 1 + (player.rank * 0.05);
     let finalScore = Math.floor(rawScore * randomFactor * rankBonus);
 
-    // 4. 데이터 반영
+    // 2. [라이벌전] 승패 판정
+    let isWin = false;
+    if (player.currentProject.isRival) {
+        let target = player.currentProject.rivalTarget;
+        
+        if (finalScore >= target) {
+            // 승리
+            isWin = true;
+            let bonusMoney = 100000000; // 1억
+            player.money += bonusMoney;
+            player.performance += 20; 
+            alert(`🏆 [승리] AI를 압도했습니다!\n(내 점수: ${finalScore} vs AI: ${target})\n\n보상: 성과급 1억 원 + 인사고과 대폭 상승!`);
+        } else {
+            // 패배
+            player.hp = Math.floor(player.hp / 2);
+            player.performance = Math.max(0, player.performance - 10);
+            alert(`💀 [패배] AI에게 밀렸습니다...\n(내 점수: ${finalScore} vs AI: ${target})\n\n프로젝트가 회수됩니다. (보상 0원, 멘탈 붕괴)`);
+            
+            player.currentProject = null; 
+            assignProject(); 
+            addTime(true);
+            return; 
+        }
+    }
+
+    // 3. 시즌 최고 점수 갱신
+    if (!player.seasonBestScore) player.seasonBestScore = 0;
+    if (finalScore > player.seasonBestScore) player.seasonBestScore = finalScore;
+
+    // 4. 승진 점수(Performance) 계산 (신입/경력 분기)
+    let basePromo = tier === 'S' ? 20 : (tier === 'A' ? 10 : 5);
+    let rankMult = 1.0;
+
+    if (player.rank === 0) {
+        // [신입]
+        if (player.currentProject.isExtended) rankMult = 1.0; 
+        else {
+            if (player.tier === 'Global' || player.tier === 'Space') rankMult = 1.0; 
+            else if (player.tier === 'Unicorn') rankMult = 1.1; 
+            else rankMult = 1.2; 
+        }
+    } else {
+        // [경력]
+        if (player.rank === 1) rankMult = 0.75;
+        else if (player.rank === 2) rankMult = 0.5;
+        else if (player.rank === 3) rankMult = 0.25;
+    }
+    
+    let finalPromo = Math.max(1, Math.round(basePromo * rankMult));
     player.performance += finalPromo;
     
+    // 5. 기록 저장 (대박이면 이름 앞에 불꽃 추가)
     let historyName = player.currentProject.name;
     if (isViral) historyName = "🔥 " + historyName;
 
@@ -2459,19 +2492,29 @@ function completeProject() {
         name: historyName, 
         score: finalScore, 
         grade: tier,
-        companyTier: player.currentProject.companyTier || player.tier, 
+        companyTier: player.currentProject.companyTier || player.tier,
         buffType: player.currentProject.buffType || 'fame'
     });
     
     if(finalScore > player.bestPortfolioScore) player.bestPortfolioScore = finalScore;
 
-    // 5. 결과 메시지
-    let msg = `✅ 결재 승인! [${tier}급] 완료!\n`;
-    if (isViral) msg += `🔥 대박 터짐! 시장 반응 폭발! 🔥\n`;
-    else if (tier === 'S' && randomFactor < 1.0) msg += `📉 시장 반응이 미지근합니다...\n`;
+    // 6. 결과 메시지 구성
+    let msg = `✅ 결재 승인! [${tier}급] 완료!\n(점수: ${finalScore.toLocaleString()} / 고과 +${finalPromo})`;
     
-    msg += `(승진심사 +${finalPromo})`;
+    // ★★★ [복구] S급 대박/쪽박 메시지 로직 ★★★
+    if (isViral) {
+        msg += `\n🔥 대박 터짐! 시장 반응 폭발! 🔥`;
+    } 
+    else if (tier === 'S' && randomFactor < 1.0) {
+        msg += `\n📉 시장 반응이 미지근합니다...`;
+    }
 
+    // 라이벌 승리 메시지 덮어쓰기
+    if (player.currentProject.isRival && isWin) {
+        msg = `🏆 AI 격파! 점수: ${finalScore.toLocaleString()}점\n(승진심사 +${finalPromo + 20})`; 
+    }
+
+    // 신입 가산점 안내 멘트
     if (player.rank === 0) {
         if (player.currentProject.isExtended) msg += `\n※ 반려 이력으로 신입 가산점 제외됨`;
         else if (rankMult > 1.0) msg += `\n✨ 신입 가산점 ${Math.round((rankMult-1)*100)}% 적용!`;
@@ -2479,6 +2522,7 @@ function completeProject() {
 
     alert(msg);
     
+    // 종료 처리
     player.currentProject = null; 
     assignProject(); 
     addTime(true);
@@ -2567,70 +2611,58 @@ function rejectProject() {
     updateUI();
 }
 
-// [Ver 69.1 Fix] 경제 부양책 (월급 인상 & 물가 안정)
+// [수정] 시간 경과 (연말 어워드 개최 로직 추가)
 function addTime(workDone = true) {
     player.totalWeeks++; 
     player.workedThisWeek = false;
-// ▼▼▼ [여기부터 잔소리 로직 추가] ▼▼▼
-    // 페이즈 1(취준생)이고, 프로젝트를 안 하고 있다면?
-    if (!player.isPhase2 && !player.isProjectStarted) {
-        // 공백기 카운터가 없으면 초기화
-        if (!player.idleWeeks) player.idleWeeks = 0;
-        
-        player.idleWeeks++; // 1주 추가
 
-        // 4주(한 달) 연속 놀았으면 잔소리 발동!
-        if (player.idleWeeks >= 4) {
-            triggerNaggingEvent();
-        }
+    // [어워드 카운트]
+    if (!player.weeksSinceAward) player.weeksSinceAward = 0;
+    player.weeksSinceAward++;
+
+    // 1년(48주)마다 디자인 어워드 개최
+    if (player.weeksSinceAward >= 48) {
+        triggerDesignAward();
+        player.weeksSinceAward = 0; // 카운트 초기화
+    }
+
+    // (이하 기존 로직 동일: 공백기 잔소리, 월급날, 마감 체크 등)
+    if (!player.isPhase2 && !player.isProjectStarted) {
+        if (!player.idleWeeks) player.idleWeeks = 0;
+        player.idleWeeks++;
+        if (player.idleWeeks >= 4) triggerNaggingEvent();
     } else {
-        // 프로젝트 중이거나 직장인이면 카운터 초기화 (안심)
         player.idleWeeks = 0;
     }
-    // ▲▲▲ [여기까지 추가] ▲▲▲
 
- // 1. 월급날 체크 (30일에 한 번)
     let isPayDay = (player.totalWeeks % 30 === 0); 
-    
     if (isPayDay) {
         let monthlyIncome = 0;
         let monthlyCost = 0;
-        let costName = "기타 비용"; // 명세서에 찍힐 이름
+        let costName = "기타 비용";
 
         if (player.isPhase2) {
-            // [Phase 2: 직장인] 월급 O, 품위유지비(높음)
             monthlyIncome = Math.floor(player.salary * 4.5);
-            
             const costTable = { Agency: 300000, TopTier: 600000, Unicorn: 1400000, Global: 20000000, Space: 200000000 };
             let base = costTable[player.tier] || 500000;
             let rankMult = 1 + (player.rank * 0.2);
             monthlyCost = Math.floor(base * rankMult);
             costName = "세금 및 품위 유지비";
-        } 
-        else {
-            // [Phase 1: 취준생] 수입 0원, 생활비(낮음)
-            // ★ 월 150,000원 고정 지출 (알바 약 4회 분량)
+        } else {
             monthlyIncome = 0;
             monthlyCost = 150000;
             costName = "생활비 (식비/통신비)";
         }
 
-        // 돈 처리
         player.money += monthlyIncome;
-        if (player.money >= monthlyCost) {
-            player.money -= monthlyCost;
-        } else {
-            // 돈 없으면 0원 (추후 빚 시스템 도입 가능)
-            player.money = 0; 
-        }
+        if (player.money >= monthlyCost) player.money -= monthlyCost;
+        else player.money = 0; 
 
-        // 팝업 호출 (이름 전달)
         setTimeout(() => {
             openPaydayPopup(monthlyIncome, monthlyCost, costName);
         }, 300); 
     }
 
-    // 2. 프로젝트 기한 체크
     if(!player.isPhase2 && player.isProjectStarted) { 
         player.currentWeekInProject++; 
         if(player.currentWeekInProject >= player.deadline) finishProject(); 
@@ -2641,7 +2673,6 @@ function addTime(workDone = true) {
         if(player.currentProject.currentWeek > player.currentProject.deadline) rejectProject();
     }
     
-    // 3. 승진 로직
     if(player.isPhase2 && player.performance >= 100) {
         if(player.rank < 3) { 
             player.rank++;
@@ -2650,8 +2681,7 @@ function addTime(workDone = true) {
             alert(`🎉 [${RANKS[player.rank]}]로 승진! 연봉 협상 완료!`);
         } else { 
             player.performance = 0;
-            // 임원 성과급 (월급의 50% 정도 보너스)
-            let bonus = Math.floor(player.salary * 2.5); // 4.5주급의 절반 수준인 2.5배로 상향
+            let bonus = Math.floor(player.salary * 2.5);
             player.money += bonus;
             alert(`🎉 임원 성과급 지급! (+${bonus.toLocaleString()}원)`);
         }
@@ -3797,8 +3827,7 @@ function showSpeechBubble(text) {
     // 3. 캐릭터 위치 기준으로 좌표 계산
     // targetSprite.x는 화면 중앙(180)입니다.
     // 말풍선 너비(약 140px)를 고려해서 왼쪽으로 이동시킵니다.
-    // 캐릭터 중앙(180) - 130 = 50px (화면 좌측)
-    const offsetX = 80; 
+    const offsetX = 120; 
     
     bubble.style.left = (targetSprite.x - offsetX) + 'px';
     bubble.style.top = '220px'; // 캐릭터 머리 높이 (고정값)
@@ -3841,7 +3870,7 @@ function getMaxHp() {
     let lvl = Math.floor(player.designStat / 100);
     // [수정] 100 + (레벨 * 0.8)
     // Lv.26 기준: 100 + 20 = 120 (TopTier 4회, Unicorn 3회 가능)
-    return 100 + Math.floor(lvl * 0.8);
+    return 100 + Math.floor(lvl * 0.5);
 }
 // [Ver 64.0] 명예의 전당 시스템
 
@@ -4307,21 +4336,43 @@ function submitAnswer(effect) {
     updateInterviewUI();
 }
 
-// [Ver 79.5 Fix] 면접 패널티 시간 강화 (1분 -> 3분)
+// [수정] 면접 결과 처리 (현실적 난이도 상향 Ver)
+// - 억지스러운 운빨 요소 제거
+// - 찍기 방지용 최소 커트라인 설정
 function finishInterview() {
     closePopup();
     
     let passed = false;
 
-    // 합격 로직 (Ver 77.0 기준)
+    // [기본 스탯 10 + 답변으로 얻는 점수]
+    // 답변 1개당 평균 획득량: Best(+6~7), Good(+4~5), Bad(+0~2)
+    
+    // 1. Agency (에이전시): 열정(P) 중시
     if (interviewTargetJob.tier === 'Agency') {
-        if (interviewStats.P >= 14 || (interviewStats.P >= 12 && interviewStats.L >= 12)) passed = true;
-    } else {
-        if ((interviewStats.L >= 12 && interviewStats.S >= 12) || interviewStats.L >= 16 || interviewStats.S >= 16) passed = true;
+        // 목표: 15 (필요 획득량 +5)
+        // 해석: Best 답변 1개면 바로 통과, Good 답변이면 2개 필요.
+        if (interviewStats.P >= 15 || (interviewStats.P >= 13 && interviewStats.L >= 13)) {
+            passed = true;
+        }
+    } 
+    // 2. 상위 기업 (TopTier ~ Space): 논리(L) & 센스(S) 중시
+    else {
+        // 목표: 한 우물 18 (필요 획득량 +8)
+        // 해석: 3문제 중 2문제는 확실하게 강점을 어필해야 함.
+        // ------------------------------------------------
+        // 목표: 밸런스 14 & 14 (필요 획득량 각각 +4)
+        // 해석: 한쪽으로 치우치지 않고 골고루 정답을 맞춘 경우.
+        if (
+            interviewStats.L >= 18 ||  // 논리 전문가
+            interviewStats.S >= 18 ||  // 센스 전문가
+            (interviewStats.L >= 14 && interviewStats.S >= 14) // 육각형 인재
+        ) {
+            passed = true;
+        }
     }
 
     if (passed) {
-        // 합격 시 쿨타임 해제
+        // 합격 처리
         if(interviewCooldowns[interviewTargetJob.name]) delete interviewCooldowns[interviewTargetJob.name];
 
         pendingOffer = { 
@@ -4331,26 +4382,28 @@ function finishInterview() {
         };
         document.getElementById('offer-company-name').innerText = interviewTargetJob.name;
         openPopup('offer-popup');
-    } else {
-        // 불합격 시
-        player.hp = Math.max(0, player.hp - 20);
         
-        // ★★★ [수정됨] 3분(180초) 쿨타임 설정 ★★★
-        // 3 * 60 * 1000 = 180,000ms
-        let penaltyTime = 3 * 60 * 1000; 
+    } else {
+        // 불합격 처리
+        player.hp = Math.max(0, player.hp - 20); 
+        
+        let penaltyTime = 3 * 60 * 1000; // 3분 쿨타임
         interviewCooldowns[interviewTargetJob.name] = Date.now() + penaltyTime;
 
-        // 조언 멘트
-        let advice = "조금 더 균형 잡힌 시각이 필요해 보입니다.";
-        if (interviewTargetJob.tier !== 'Agency') {
-            if (interviewStats.L < 12 && interviewStats.S < 12) advice = "논리와 센스, 둘 다 조금씩 부족했습니다.";
-            else if (interviewStats.L < 12) advice = "논리적인 설득력이 조금 부족했습니다.";
-            else if (interviewStats.S < 12) advice = "트렌디한 감각(센스) 어필이 부족했습니다.";
+        // 탈락 사유 피드백
+        let reason = "";
+        if (interviewTargetJob.tier === 'Agency') {
+            reason = `열정이 조금 부족했습니다. (현재: ${interviewStats.P} / 합격선: 15)`;
+        } else {
+            let maxStat = Math.max(interviewStats.L, interviewStats.S);
+            if (maxStat < 18) {
+                reason = `확실한 강점 어필(18점↑)에 실패했습니다. (현재 최고: ${maxStat})`;
+            } else {
+                reason = "우리 회사와 인재상이 맞지 않습니다.";
+            }
         }
 
-        // 알림창 안내 (3분)
-        alert(`[면접 탈락] 😭\n"${advice}"\n\n(HP -20, 3분간 재지원 불가 🚫)`);
-        
+        alert(`[면접 탈락] 😭\n"${reason}"\n\n(HP -20, 3분간 재지원 불가 🚫)`);
         updateUI();
     }
 }
@@ -4373,28 +4426,6 @@ function triggerNaggingEvent() {
     updateUI();
 }
 
-/* [수정] 브릿지 뷰 강제 종료 스크립트 */
-document.addEventListener('DOMContentLoaded', function() {
-    const bridge = document.getElementById('bridge-view');
-    const intro = document.getElementById('intro-layer');
-    
-    // 인트로는 뒤에 미리 켜두기
-    if(intro) intro.style.display = 'flex';
-
-    // 1.5초 뒤에 무조건 실행
-    setTimeout(() => {
-        if (bridge) {
-            // 1. 투명하게 만들기
-            bridge.classList.add('bridge-hidden'); 
-            
-            // 2. 0.6초 뒤에 아예 삭제 (확실하게)
-            setTimeout(() => { 
-                bridge.style.display = 'none'; 
-            }, 600);
-        }
-    }, 1500); 
-});
-// ▼▼▼ 스크립트 맨 아래쪽에 이 함수를 추가하세요 ▼▼▼
 
 // [캐릭터 크기 및 위치 조정 헬퍼 함수]
 function adjustCharacterSize(sprite, w, h) {
@@ -4407,10 +4438,10 @@ function adjustCharacterSize(sprite, w, h) {
     // 2. 비율 유지하며 크기 변경
     sprite.setDisplaySize(targetHeight * (sprite.width / sprite.height), targetHeight);
     
-    // 3. 위치: 위로 끌어올림 (기존 0.15 -> 0.02)
-    // 0에 가까울수록 화면 정중앙입니다.
-    sprite.setPosition(w / 2, h / 2 + (h * 0.02));
-    
+// 3. 위치: 위로 끌어올림 (수정됨)
+// h * 0.05 만큼 빼서 화면 중앙보다 위로 올립니다.
+sprite.setPosition(w / 2, h / 2 - (h * 0.02));
+
     // 4. 고정
     sprite.setScrollFactor(0);
 }
@@ -4418,6 +4449,142 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
             .then(() => console.log('Service Worker Registered'));
     }
+    // ==========================================
+// [테스트용 치트 함수]
+// ==========================================
+
+// 1. 스킬 레벨 업 (디자인 스탯 +100)
+window.cheatLevelUp = function() {
+    player.designStat += 100;
+    updateUI();
+    // 화면 중앙에 연출 텍스트 띄우기
+    showFloatingText(180, 300, "스킬 급상승! (+100)", "#9956DE");
+}
+
+window.cheatMoney = function() {
+    // 1. 현재 정보로 급여 갱신
+    updateSalary(); 
+
+    // 2. 월 수입 계산 (주급 * 4.5)
+    let monthlyIncome = Math.floor(player.salary * 4.5);
+    
+    // 3. 세금(품위유지비) 계산 (게임 내 로직과 동일)
+    const costTable = { Agency: 300000, TopTier: 600000, Unicorn: 1400000, Global: 20000000, Space: 200000000 };
+    // 현재 티어에 맞는 기본 세금 가져오기 (없으면 Agency 기준)
+    let baseCost = costTable[player.tier] || 300000;
+    // 직급(사원,대리,팀장..)에 따른 가중치
+    let rankMult = 1 + (player.rank * 0.2);
+    let monthlyCost = Math.floor(baseCost * rankMult);
+    let costName = "세금 및 품위 유지비";
+
+    // [예외 처리] 만약 취준생(Phase 1)이라 월급이 0원인 경우, 
+    // 치트 기능이 작동하도록 Agency 급여 기준으로 강제 설정
+    if (!player.isPhase2 || monthlyIncome === 0) {
+        monthlyIncome = Math.floor(450000 * 4.5); // Agency 기본급 기준
+        monthlyCost = 150000; // Phase 1 생활비
+        costName = "특별 생활비 (치트)";
+    }
+
+    // 4. 실제 입금 처리 (수입 더하고 세금 뺌)
+    player.money += monthlyIncome;
+    
+    if (player.money >= monthlyCost) {
+        player.money -= monthlyCost;
+    } else {
+        player.money = 0; // 잔고 부족 시 0원
+    }
+
+    // 5. UI 갱신
+    updateUI();
+
+    // 6. 월급 명세서 팝업 띄우기 (기존 함수 재사용)
+    // openPaydayPopup(수입, 지출, 지출항목이름)
+    openPaydayPopup(monthlyIncome, monthlyCost, costName);
+    
+    // 이펙트
+    showFloatingText(180, 300, "월급 수령 완료", "#4CD964");
+}
+
+// 3. 체력 완전 회복
+window.cheatHp = function() {
+    player.hp = getMaxHp(); // 현재 레벨에 맞는 최대 체력으로 회복
+    updateUI();
+    showFloatingText(180, 300, "컨디션 최고조! (Full)", "#4CD964");
+}
+
+// 4. 패널 숨기기/보이기 (테스트 중 화면 가릴 때 사용)
+window.toggleCheatPanel = function() {
+    const btns = document.querySelectorAll('#cheat-panel button:not(:last-child)');
+    btns.forEach(btn => {
+        btn.style.display = (btn.style.display === 'none') ? 'block' : 'none';
+    });
+}
+// [수정] 디자인 어워드 (연봉 인상 X -> 일시불 상금 O)
+function triggerDesignAward() {
+    // 이번 시즌 최고 점수 확인
+    let score = player.seasonBestScore || 0;
+    
+    // 점수별 등급 및 상금 산정
+    let title = "참가상";
+    let prizeMoney = 0; 
+    let icon = "📄";
+
+    if (score >= 100000) { 
+        title = "🏆 그랑프리 (대상)"; 
+        prizeMoney = 500000000; // 5억
+        icon = "🤴"; 
+    }
+    else if (score >= 50000) { 
+        title = "🥇 금상 (Gold)"; 
+        prizeMoney = 200000000; // 2억
+        icon = "🥇"; 
+    }
+    else if (score >= 10000) { 
+        title = "🥈 은상 (Silver)"; 
+        prizeMoney = 50000000; // 5천만
+        icon = "🥈"; 
+    }
+    else if (score >= 3000) { 
+        title = "🥉 동상 (Bronze)"; 
+        prizeMoney = 10000000; // 1천만
+        icon = "🥉"; 
+    }
+
+    // 상금 지급 처리
+    if (prizeMoney > 0) {
+        player.money += prizeMoney;
+    }
+
+    // 시즌 점수 초기화
+    player.seasonBestScore = 0;
+
+    // 알림 메시지
+    let msg = `✨ [연례 디자인 어워드] 결과 발표 ✨\n\n`;
+    msg += `나의 최고 점수: ${score.toLocaleString()}점\n`;
+    msg += `결과: ${icon} [${title}] 수상!\n\n`;
+    
+    if (prizeMoney > 0) {
+        msg += `축하합니다! 상금 ${prizeMoney.toLocaleString()}원이 지급되었습니다.\n`;
+        msg += `(명예와 부를 모두 거머쥐셨군요!)`;
+    } else {
+        msg += `아쉽게도 수상권에 들지 못했습니다.\n내년에는 더 분발하세요!`;
+    }
+
+    alert(msg);
+    updateUI(); // 돈이 들어왔으니 UI 갱신
+}
+
+// [복구] 급여 계산 (어워드 영구 인상 로직 삭제됨)
+function updateSalary() {
+    let base = BASE_SALARY[player.tier] || 180000;
+    let multi = RANK_MULTIPLIER[player.rank] || 1;
+    
+    // 명예의 전당(Wealth) 버프만 적용
+    let buff = getHofBuffs().wealth; 
+    let buffMult = 1 + (buff / 100);
+
+    player.salary = Math.floor(base * multi * buffMult);
+}
  </script>
 </body>
 </html>
