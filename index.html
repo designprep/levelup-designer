@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <title>디자이너 키우기: Ver 80.0 </title>
+<meta name="apple-mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">    <title>레벨업 디자이너</title>
     <link rel="manifest" href="manifest.json">
     <style>
         /* [폰트] Pretendard */
@@ -12,8 +12,25 @@
 /* [1. 전체 화면 및 바디 설정] */
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #191F28; overflow: hidden; position: fixed; touch-action: none; }
 
+/* ▼▼▼ [추가/수정] 화면 잘림 방지용 강제 스타일 ▼▼▼ */
+canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none;
+}
 /* 2. 게임 컨테이너: 비율 고정(aspect-ratio) 삭제 -> 화면 전체 사용 */
-#game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; margin: 0; padding: 0; }
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    z-index: 1;
+}
 
 /* [모바일 등 세로가 더 긴 화면일 때의 예외 처리] */
 @media (max-aspect-ratio: 9/16) {
@@ -210,7 +227,7 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
             padding: 0 4px; 
             box-sizing: border-box; 
         }
-        .menu-btn { background: rgba(51, 61, 75, 0.95); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .menu-btn { background: rgba(51, 61, 75, 0.95); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 8px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; transition: transform 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .menu-btn:active { transform: scale(0.95); background: #454F5D; }
 
         /* [3. 하단 영역] */
@@ -318,7 +335,8 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
         .char-stamp-box { width: 100px; height: 120px; background: #fff; border: 1px solid #ddd; padding: 5px; margin-bottom: 15px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); transform: rotate(-2deg); }
         .success-char-img { width: 100%; height: 100%; object-fit: contain; background: #f5f5f5; }
         .notice-text { color: #555; font-size: 14px; line-height: 1.6; word-break: keep-all; }
-        .company-name { color: #3182F6; font-size: 20px; font-weight: 800; display: block; margin: 8px 0; text-decoration: underline; }
+/* [수정] 회사명 스타일 (Block 제거 -> 글자 옆에 '의'가 붙도록 변경) */
+        .company-name {color: #3182F6; font-size: 22px; /* 폰트 크기 유지 */ font-weight: 800; text-decoration: underline; }        
         .score-box { background: linear-gradient(135deg, #fff9e6 0%, #fff 100%); border: 2px solid #FFD700; border-radius: 12px; padding: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2); }
         .score-label { font-size: 13px; color: #b78a00; font-weight: 700; margin-bottom: 5px; }
         .score-value { color: #333; font-size: 18px; font-weight: 700; }
@@ -810,9 +828,644 @@ button:active,
     letter-spacing: -0.5px; /* 자간 미세 조정 */
 }
 
+/* ▼▼▼ [추가] 어워드 팝업 스타일 ▼▼▼ */
+#award-popup {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9); z-index: 30000;
+    justify-content: center; align-items: center; overflow: hidden;
+}
+
+/* 빙글빙글 돌아가는 후광 */
+.award-ray {
+    position: absolute; width: 200%; height: 200%;
+    background: repeating-conic-gradient(#FFD700 0% 5%, transparent 5% 10%);
+    animation: rotateRay 10s linear infinite; opacity: 0.2;
+}
+@keyframes rotateRay { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.award-content {
+    position: relative; width: 85%; max-width: 340px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border: 2px solid #FFD700; border-radius: 20px;
+    padding: 30px 20px; text-align: center;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    animation: popInBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+@keyframes popInBounce { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+.award-header { color: #FFD700; font-size: 14px; font-weight: 900; letter-spacing: 2px; margin-bottom: 20px; }
+.award-icon { 
+    font-size: 80px; 
+    margin-bottom: 10px; 
+    filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); 
+    /* 애니메이션 줄 삭제됨 */
+}.award-title { color: #fff; font-size: 24px; font-weight: 800; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.award-score { color: #888; font-size: 13px; margin-bottom: 25px; }
+
+.award-prize-box { background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+.prize-label { color: #FFD700; font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+.prize-amount { color: #fff; font-size: 22px; font-weight: 900; }
+
+.award-btn { background: #FFD700 !important; color: #000 !important; font-weight: 900 !important; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4); border:none; }
+.award-btn:active { transform: scale(0.95); }
+/* ▼▼▼ [추가] 두근두근 심장박동 애니메이션 ▼▼▼ */
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.3); }
+    30% { transform: scale(1); }
+    45% { transform: scale(1.15); }
+    60% { transform: scale(1); }
+}
+.heart-effect {
+    animation: heartBeat 1.2s infinite;
+}
+
+/* [추가] 면접 반응판 전용 스타일 */
+#interview-stats-display {
+    transition: all 0.3s ease;
+    min-width: 120px; /* 최소 너비 확보 */
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+/* 반응이 갱신될 때 깜빡이는 효과 */
+.reaction-pop {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: rgba(255, 255, 255, 0.1) !important; /* 배경 살짝 밝게 */
+    border: none !important;
+}
+
+/* ▼▼▼ [추가] AI 라이벌 모드 (위험 연출) ▼▼▼ */
+.project-widget.rival-mode {
+    background: linear-gradient(135deg, #3a0000 0%, #1a0000 100%) !important; /* 검붉은 배경 */
+    border: 2px solid #FF5F5F !important; /* 빨간 테두리 */
+    box-shadow: 0 0 15px rgba(255, 95, 95, 0.4) !important;
+    animation: pulseRed 1.5s infinite alternate !important; /* 두근두근 효과 */
+}
+.project-widget.rival-mode h4 { color: #FF5F5F !important; } /* 제목 빨간색 */
+.project-widget.rival-mode .pw-title { color: #fff !important; }
+.project-widget.rival-mode .pw-bar-fill { background: #FF5F5F !important; } /* 게이지 빨간색 */
+
+@keyframes pulseRed {
+    0% { transform: rotate(2deg) scale(1); box-shadow: 0 0 10px rgba(255, 0, 0, 0.3); }
+    100% { transform: rotate(2deg) scale(1.02); box-shadow: 0 0 20px rgba(255, 0, 0, 0.6); }
+}
+
+.rival-target-score {
+    background: rgba(0, 0, 0, 0.5);
+    color: #FF5F5F;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 5px;
+    display: flex; justify-content: space-between;
+}
+/* ▼▼▼ [교체] 결과 팝업 스타일 (Ver 99.2 Fix) ▼▼▼ */
+.result-card {
+    background: #191F28;
+    width: 80%; max-width: 280px; /* 슬림하게 */
+    padding: 30px 20px;
+    border-radius: 20px;
+    text-align: center; /* 전체 중앙 정렬 */
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    display: flex; flex-direction: column; align-items: center;
+    animation: slideUpFade 0.3s ease-out;
+}
+
+/* 헤더 뱃지 */
+.result-header { margin-bottom: 25px; width: 100%; display: flex; justify-content: center; }
+#result-type-badge {
+    font-size: 10px; font-weight: 800; letter-spacing: 2px;
+    text-transform: uppercase; color: #555;
+    background: #222; padding: 4px 8px; border-radius: 4px;
+}
+
+/* 도장 박스 (높이 확보) */
+.result-stamp-box {
+    width: 100%; height: 60px; /* 공간 확보 */
+    display: flex; justify-content: center; align-items: center;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+/* ★ 도장 텍스트 스타일 (무조건 보이게 설정) */
+.result-stamp-text {
+    font-size: 32px; font-weight: 900;
+    border: 4px solid;
+    padding: 5px 15px;
+    border-radius: 10px;
+    transform: rotate(-10deg);
+    text-transform: uppercase;
+    display: inline-block;
+    
+    /* 애니메이션: 쾅! 찍히는 효과 */
+    animation: stampCrash 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    opacity: 0; /* 시작은 투명 */
+}
+
+@keyframes stampCrash {
+    0% { transform: scale(3) rotate(-10deg); opacity: 0; }
+    100% { transform: scale(1) rotate(-10deg); opacity: 1; } /* 끝나면 불투명 */
+}
+
+/* 성공(파랑) / 실패(빨강) 테마 */
+.res-success .result-stamp-text { color: #3182F6; border-color: #3182F6; }
+.res-fail .result-stamp-text { color: #FF5F5F; border-color: #FF5F5F; }
+
+/* 제목 (중앙 정렬) */
+#result-title {
+    margin: 10px 0 20px 0;
+    font-size: 18px; font-weight: 700; color: #fff;
+    width: 100%; text-align: center; word-break: keep-all;
+    line-height: 1.4;
+}
+
+/* 점수표 */
+.result-stats {
+    width: 100%; background: rgba(0,0,0,0.3);
+    border-radius: 12px; padding: 15px; margin-bottom: 20px;
+    box-sizing: border-box;
+}
+.stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+.stat-row:last-child { margin-bottom: 0; }
+
+
+/* ▼▼▼ [수정] AI 라이벌 컷신 스타일 (Ver 99.4: 대화창 슬림화) ▼▼▼ */
+.rival-bg-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    animation: dramaFadeIn 2s forwards, slowZoom 10s infinite alternate;
+}
+
+@keyframes dramaFadeIn { to { opacity: 1; } }
+@keyframes slowZoom { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+.rival-dialog-box {
+    position: absolute;
+    bottom: 30px; /* 하단 위치 살짝 조정 */
+    left: 20px; right: 20px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #FF5F5F;
+    border-radius: 16px;
+    padding: 15px; /* 패딩 감소 (25 -> 15) */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    animation: slideUpFade 0.5s ease-out 1s backwards;
+}
+
+.rival-speaker {
+    color: #FF5F5F;
+    font-size: 13px; font-weight: 800;
+    margin-bottom: 5px; /* 마진 감소 */
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.rival-text {
+    color: #fff;
+    font-size: 15px;
+    line-height: 1.3; /* 줄 간격 촘촘하게 */
+    font-weight: 600;
+    /* min-height: 50px;  <-- 삭제 (불필요한 공간 제거) */
+    margin-bottom: 10px; /* 마진 감소 */
+    word-break: keep-all;
+}
+
+.rival-mission-info {
+    border-top: 1px dashed rgba(255,255,255,0.2);
+    padding-top: 10px; /* 패딩 감소 */
+    margin-bottom: 10px; /* 마진 감소 */
+    display: flex; justify-content: space-between; align-items: center;
+    font-weight: 700; color: #888; font-size: 12px;
+}
+
+/* 버튼 슬림하게 수정 */
+.rival-dialog-box .rival-btn {
+    background: #FF5F5F !important;
+    border: none;
+    font-weight: 800;
+    box-shadow: 0 4px 15px rgba(255, 95, 95, 0.4);
+    padding: 12px; /* 패딩 줄임 */
+    height: auto; /* 높이 자동 조절 */
+    font-size: 15px; /* 글씨 크기 살짝 줄임 */
+}
+
+
+/* ▼▼▼ [필수] 미니게임 통합 스타일 (트랙, 빨간선, 상자) ▼▼▼ */
+
+/* 1. 게임 트랙 (배경) */
+.game-track-container {
+    position: relative !important; /* 기준점 */
+    width: 100%;
+    height: 60px;
+    background: #e0e0e0; /* 연한 회색 */
+    border: 2px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+/* 2. 빨간 기준선 (중앙) - ★ 이게 없어서 안 보였던 것! */
+.center-line {
+    position: absolute !important;
+    left: 50%;
+    top: 0; 
+    bottom: 0;
+    width: 4px; /* 잘 보이게 두께 4px로 키움 */
+    background-color: #FF0000; /* 새빨간색 */
+    transform: translateX(-50%); /* 정확히 중앙 정렬 */
+    z-index: 10; /* 상자보다 뒤에 위치 */
+}
+
+/* 3. 움직이는 검은 상자 */
+.moving-block {
+    position: absolute !important;
+    top: 10px; 
+    bottom: 10px;
+    width: 20px;
+    background: #333;
+    left: 0;
+    border-radius: 4px;
+    z-index: 20; /* 선보다 앞에 위치 */
+    transition: none !important; /* 부드러운 움직임 필수 */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+/* ▼▼▼ [수정] 위기 상황 스타일 (난이도/레이아웃 개선) ▼▼▼ */
+.save-bar-container {
+    width: 100%;
+    height: 36px; /* 높이 조금 키움 */
+    background: rgba(0,0,0,0.4);
+    border: 3px solid #fff;
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto; /* 중앙 정렬 */
+}
+
+.save-bar-fill {
+    width: 50%;
+    height: 100%;
+    background: #4CD964;
+    transition: width 0.05s linear; /* 반응 속도 더 빠르게 */
+}
+
+#save-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    white-space: nowrap;
+}
+
+/* 연타 버튼 눌림 효과 강화 */
+#mash-btn:active {
+    transform: scale(0.96) translateY(4px);
+    box-shadow: 0 2px 0 #005a9e !important;
+}
+
+/* [추가] 마감 연장 성공 팝업 스타일 */
+#extension-success-popup {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%); /* 고급진 배경 */
+    border: 1px solid #7274ED; /* 포인트 컬러 (보라색 계열) */
+}
+
+/* 통화 아이콘 애니메이션 */
+.call-anim-icon {
+    font-size: 50px;
+    background: #4CD964; /* 통화 성공 녹색 */
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 0 0 rgba(76, 217, 100, 0.7);
+    animation: pulseGreen 1.5s infinite;
+}
+
+@keyframes pulseGreen {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 217, 100, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 15px rgba(76, 217, 100, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(76, 217, 100, 0); }
+}
+
+/* 클라이언트 말풍선 */
+.client-bubble-box {
+    background: #fff;
+    color: #333;
+    padding: 15px 20px;
+    border-radius: 20px;
+    border-bottom-left-radius: 2px; /* 말풍선 꼬리 느낌 */
+    margin-bottom: 25px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+}
+.client-bubble-box::after { /* 말풍선 꼬리 */
+    content: ''; position: absolute; bottom: -8px; left: 10px;
+    border-width: 10px 10px 0; border-style: solid;
+    border-color: #fff transparent; display: block; width: 0;
+}
+
+.client-name { font-size: 12px; font-weight: 800; color: #7274ED; margin-bottom: 5px; display: block; }
+.client-text { font-size: 15px; font-weight: 600; line-height: 1.5; word-break: keep-all; }
+
+/* --- [수정] 결과 배지 스타일 시작 --- */
+
+/* 1. 배지를 감싸는 컨테이너 */
+.result-badge-row {
+    display: flex;        /* 가로 배열 */
+    width: 100%;          /* 팝업 너비 꽉 채우기 */
+    gap: 10px;            /* 배지 사이 간격 */
+    margin-bottom: 25px;
+}
+
+/* 2. 배지 공통 구조 (여기가 핵심!) */
+.res-badge {
+    /* ★ 핵심: flex: 1을 주어 두 배지가 공간을 정확히 반반씩 나눠가짐 (대칭) */
+    flex: 1;
+
+    /* 내부 콘텐츠 정렬 */
+    display: flex;
+    justify-content: center; /* 텍스트 가운데 정렬 */
+    align-items: center;
+    gap: 6px;             /* 아이콘-텍스트 간격 */
+
+    /* 모양 및 크기 */
+    padding: 12px 0;      /* 상하 패딩으로 높이 조절 */
+    border-radius: 10px;  /* 둥근 모서리 */
+    border: none;         /* 테두리 제거 */
+
+    /* 텍스트 스타일 */
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    white-space: nowrap;  /* 텍스트 한 줄 유지 */
+}
+
+/* 3. 초록색 (성공) 배경 및 글씨색 */
+.badge-green {
+    background-color: rgba(76, 217, 100, 0.15); /* 연한 초록 배경 */
+    color: #4CD964; /* 진한 초록 글씨 */
+}
+
+/* 4. 붉은색 (경고) 배경 및 글씨색 */
+.badge-red {
+    background-color: rgba(255, 95, 95, 0.15); /* 연한 빨강 배경 */
+    color: #FF5F5F; /* 진한 빨강 글씨 */
+}
+/* --- 결과 배지 스타일 끝 --- */
+
+/* [신규] 면접 결과 팝업 스타일 */
+#interview-result-popup {
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    background: transparent; /* 배경 투명 (카드만 보이게) */
+    box-shadow: none;
+    border: none;
+    overflow: visible;
+}
+
+/* 공통 카드 디자인 */
+.result-card-box {
+    width: 100%;
+    background: #191F28;
+    border-radius: 24px;
+    padding: 30px 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 상단 아이콘 박스 */
+.result-icon-box {
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin-bottom: 20px;
+    margin-top: -50px; /* 카트 위로 튀어나오게 */
+    background: #333;
+    border: 4px solid #191F28; /* 배경색과 맞춰서 구멍 뚫린 느낌 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* 텍스트 스타일 */
+.res-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: #fff; }
+.res-subtitle { font-size: 14px; font-weight: 600; color: #B0B8C1; margin-bottom: 20px; }
+.res-desc-box {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+.res-message { font-size: 15px; line-height: 1.5; color: #fff; font-weight: 500; word-break: keep-all; }
+.res-sub-message { font-size: 12px; color: #FF5F5F; margin-top: 8px; font-weight: 700; }
+
+/* 성공 테마 */
+.theme-success .result-icon-box { background: #3182F6; color: #fff; box-shadow: 0 0 20px rgba(49, 130, 246, 0.5); }
+.theme-success .res-title { color: #3182F6; }
+.theme-success { border: 1px solid #3182F6; }
+
+/* 실패 테마 */
+.theme-fail .result-icon-box { background: #FF5F5F; color: #fff; box-shadow: 0 0 20px rgba(255, 95, 95, 0.5); }
+.theme-fail .res-title { color: #FF5F5F; }
+.theme-fail { border: 1px solid #FF5F5F; }
+
+
+/* [신규] 박물관 그리드 레이아웃 */
+.museum-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2열 배치 */
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 5px; /* 스크롤바 공간 */
+}
+
+/* 박물관 아이템 카드 */
+.museum-item {
+    background: #2C3038;
+    border: 1px solid #444;
+    border-radius: 12px;
+    padding: 15px 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 130px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    transition: transform 0.1s;
+}
+
+/* 획득한 유물 스타일 */
+.museum-item.acquired {
+    border: 1px solid #FFD700;
+    background: linear-gradient(135deg, #2C3038 0%, #3D3520 100%);
+}
+
+/* 빈 슬롯 스타일 */
+.museum-item.empty {
+    border: 1px dashed #555;
+    background: rgba(0,0,0,0.2);
+    opacity: 0.4;
+}
+
+/* 유물 아이콘 */
+.artifact-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.4));
+}
+
+/* 유물 이름 */
+.artifact-name {
+    font-size: 13px;
+    font-weight: 800;
+    color: #FFD700;
+    margin-bottom: 4px;
+    word-break: keep-all;
+    line-height: 1.3;
+}
+
+/* 유물 설명 */
+.artifact-desc {
+    font-size: 10px;
+    color: #aaa;
+    line-height: 1.3;
+    word-break: keep-all;
+}
+/* [신규] 박물관 가이드 박스 스타일 */
+.museum-guide-box {
+    background: rgba(255, 215, 0, 0.1); /* 금색 배경 연하게 */
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.museum-guide-box p {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.5;
+    margin: 0;
+    word-break: keep-all;
+}
+
+/* [신규] SSS급 인트로 스타일 */
+.sss-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 50000; /* 최상단 */
+    background: #000;
+    display: flex; flex-direction: column; justify-content: flex-end;
+}
+
+/* 배경 이미지 (서서히 줌인 효과) */
+.sss-bg-img {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.6; /* 텍스트 가독성을 위해 살짝 어둡게 */
+    animation: fadeInZoom 3s forwards ease-out;
+}
+
+@keyframes fadeInZoom {
+    0% { opacity: 0; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
+}
+
+/* 텍스트 콘텐츠 박스 */
+.sss-content {
+    position: relative; z-index: 1;
+    padding: 30px;
+    background: linear-gradient(to top, rgba(0,0,0,1) 10%, rgba(0,0,0,0) 100%);
+    text-align: center;
+    padding-bottom: 50px;
+}
+
+/* 타이틀 (위에서 떨어짐) */
+.sss-title {
+    font-size: 32px; font-weight: 900; color: #fff;
+    text-transform: uppercase; letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(49, 130, 246, 0.8); /* 파란 네온 */
+    margin-bottom: 10px;
+    opacity: 0; animation: slideDownFade 0.8s 0.5s forwards;
+}
+
+/* 서브타이틀 */
+.sss-subtitle {
+    font-size: 14px; color: #B0B8C1; margin-bottom: 30px;
+    letter-spacing: 4px;
+    opacity: 0; animation: fadeIn 1s 1s forwards;
+}
+
+/* 대사 박스 */
+.sss-dialog {
+    background: rgba(255, 255, 255, 0.1);
+    border-left: 4px solid #FF5F5F;
+    padding: 15px;
+    text-align: left;
+    font-size: 14px; color: #ddd;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    border-radius: 4px;
+    opacity: 0; animation: slideUpFade 0.8s 1.5s forwards;
+}
+
+/* 시작 버튼 (깜빡임 효과) */
+.sss-start-btn {
+    background: #fff !important; color: #000 !important;
+    font-weight: 900 !important; font-size: 18px !important;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    opacity: 0; animation: popIn 0.5s 2.5s forwards, blinkBtn 2s infinite 3s;
+}
+
+@keyframes slideDownFade { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideUpFade { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes blinkBtn { 0% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); } 50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.9); } 100% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); } }
+
+/* =========================================================
+   🔒 [출시용] 치트 및 테스트 버튼 완전 숨김 (CSS 강제 적용)
+   자바스크립트보다 먼저 적용되어 깜빡임 현상이 100% 사라집니다.
+   ========================================================= */
+#cheat-panel,              /* 왼쪽 아래 치트 패널 */
+.debug-btn,                /* 상단/중간 디버그 버튼들 */
+button[onclick*="cheat"],  /* 클릭 기능에 'cheat'가 들어간 모든 버튼 */
+button[onclick*="test"],   /* 클릭 기능에 'test'가 들어간 모든 버튼 */
+button[onclick*="resetGameData"] /* 초기화 버튼 (설정창 포함) */
+{
+    display: none !important;
+}
+
+/* style 태그 맨 끝에 추가 */
+canvas { display: block !important; width: 100% !important; height: 100% !important; }
+
 
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+
 </head>
 <body>
     <div id="game-container">
@@ -832,13 +1485,10 @@ button:active,
 <div id="intro-layer" onclick="startGame()">
     <img src="assets/intro_bg.png" class="intro-bg" alt="배경">
     
-<div class="rating-badge-mini" style="display:none;">
-    <img src="assets/grac_all.png" alt="전체이용가"> 
-</div>
 
     <div class="logo-container">
         <img src="assets/intro_logo.png" class="intro-logo" alt="로고">
-        <p class="intro-subtitle">레벨 업! 디자이너</p>
+        <p class="intro-subtitle">레벨업 디자이너</p>
     </div>
     <p class="start-msg">터치하여 시작하기</p>
 </div>
@@ -931,12 +1581,28 @@ button:active,
                 </button>
             </div>
 
-            <div class="menu-bar">
-                <button class="menu-btn" onclick="renderShop(); openPopup('shop-popup');">🛒 상점</button>
-                <button class="menu-btn" onclick="renderInventory(); openPopup('inventory-popup');">🎒 장비</button>
-                <button class="menu-btn" onclick="openHallOfFame()">📂 포폴</button>
-                <button class="menu-btn" onclick="openJobMarket(); openPopup('job-popup');">🚀 이직</button>
-            </div>
+<div class="menu-bar" style="gap: 4px;"> 
+    
+    <button class="menu-btn" onclick="renderShop(); openPopup('shop-popup');">
+        🛒 상점
+    </button>
+    
+    <button class="menu-btn" onclick="renderInventory(); openPopup('inventory-popup');">
+        🎒 장비
+    </button>
+
+    <button id="btn-museum" class="menu-btn" onclick="openMuseum()" style="display: none; border: 1px solid #FFD700; color:#FFD700;">
+        🏛️ 박물관
+    </button>
+
+    <button class="menu-btn" onclick="openHallOfFame()">
+        🏆 명예
+    </button>
+
+    <button class="menu-btn" onclick="openJobMarket(); openPopup('job-popup');">
+        🚀 이직
+    </button>
+</div>
 
             <div class="bottom-area">
                 <div class="log-box">
@@ -979,6 +1645,124 @@ button:active,
     <div id="interview-answers" style="display:flex; flex-direction:column; gap:0; margin-top:10px;">
         </div>
 </div>
+<div id="suspense-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:40000; flex-direction:column; justify-content:center; align-items:center; color:#fff;">
+    <div style="font-size:60px; margin-bottom:20px;">💓</div>
+    <div id="suspense-text" style="font-size:18px; font-weight:700; text-align:center; line-height:1.6;">
+        면접관들이 상의 중입니다...
+    </div>
+</div>
+
+<div id="interview-result-popup" class="popup" style="z-index: 12000;">
+    <div id="interview-result-card" class="result-card-box">
+        <div id="res-icon" class="result-icon-box">🎉</div>
+        
+        <h2 id="res-title" class="res-title">합격 축하합니다!</h2>
+        <div id="res-company" class="res-subtitle">Tooss 채용팀</div>
+        
+        <div class="res-desc-box">
+            <div id="res-msg" class="res-message">
+                "귀하의 뛰어난 역량을 높이 평가하여<br>최종 합격을 통보합니다."
+            </div>
+            <div id="res-sub-msg" class="res-sub-message"></div>
+        </div>
+
+        <div id="res-btn-area" style="width: 100%;">
+            </div>
+    </div>
+</div>
+
+<div id="award-popup">
+    <div class="award-ray"></div> <div class="award-content">
+        <div class="award-header">✨ ANNUAL DESIGN AWARDS ✨</div>
+        <div class="award-icon" id="award-icon">🏆</div>
+        <div class="award-title" id="award-title">대상 (Grand Prix)</div>
+        <div class="award-score">최고 점수: <span id="award-score-val">0</span>점</div>
+        
+        <div class="award-prize-box">
+            <div class="prize-label">TOTAL PRIZE</div>
+            <div class="prize-amount" id="award-money">₩ 500,000,000</div>
+        </div>
+
+        <button class="full-btn award-btn" onclick="claimAward()">상금 수령하기</button>
+    </div>
+</div>
+
+<div id="result-popup" class="popup" style="z-index: 22000; background: transparent; box-shadow: none; border: none; align-items: center; justify-content: center;">
+    
+    <div class="result-card">
+        <div class="result-header">
+            <span id="result-type-badge">PROJECT REPORT</span>
+        </div>
+
+        <div class="result-stamp-box">
+            <div id="result-stamp" class="result-stamp-text">APPROVED</div>
+        </div>
+
+        <h2 id="result-title">결과 제목</h2>
+
+        <div id="result-stat-box" class="result-stats">
+            </div>
+
+        <button class="full-btn" onclick="closeResultPopup()">확인</button>
+    </div>
+</div>
+
+<div id="rival-intro-layer" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index: 40000; background:#000;">
+    
+    <img src="assets/ai.png" class="rival-bg-img" alt="AI Rival Art">
+
+    <div class="rival-dialog-box">
+        <div class="rival-speaker">🤖 Alpha-D</div>
+        <div id="rival-typing-text" class="rival-text">
+            </div>
+        
+        <div class="rival-mission-info">
+            <span>TARGET SCORE</span>
+            <span id="rival-intro-target" style="color:#FF5F5F; font-size:20px;">0</span>
+        </div>
+
+        <button class="full-btn rival-btn" onclick="closeRivalIntro()">도전 수락 (Accept)</button>
+    </div>
+</div>
+
+<div id="rival-warning-popup" class="popup" style="z-index: 45000; background: rgba(20, 0, 0, 0.95); border: 2px solid #FF5F5F; box-shadow: 0 0 50px rgba(255, 95, 95, 0.3); 
+    display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+    
+    <div style="font-size: 50px; margin-bottom: 20px;">🚨</div>
+    
+    <h2 style="color: #FF5F5F; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; width: 100%; text-align: center;">SYSTEM WARNING</h2>
+    
+    <p style="color: #fff; font-size: 16px; line-height: 1.6; font-weight: 600; word-break: keep-all; width: 100%; text-align: center;">
+        "경쟁사가 AI 시스템을 가동했습니다."<br>
+        <span style="color: #FF5F5F; font-size: 14px;">(감지된 개체: Alpha-D)</span>
+    </p>
+    
+    <button class="full-btn" onclick="confirmRivalWarning()" style="background: #FF5F5F; color: #fff; font-weight: 800; margin-top: 20px; border: none; box-shadow: 0 4px 15px rgba(255, 95, 95, 0.4); width: 100%;">
+        확인 (진입)
+    </button>
+</div>
+<div id="sss-intro-layer" class="sss-layer" style="display:none;">
+    <img src="assets/sss_intro.png" class="sss-bg-img" alt="Final Battle">
+    
+    <div class="sss-content">
+        <div class="sss-title">PROJECT:<br>SINGULARITY</div>
+        <div class="sss-subtitle">"HUMAN vs AI: The Final Test"</div>
+        
+        <div class="sss-dialog">
+            <span style="color:#FF5F5F; font-weight:800;">🤖 Alpha-D:</span><br>
+            "박물관이 완성되었군요.<br>
+            하지만 이것만으론 부족합니다.<br>
+            <br>
+            저에게 당신의 <span style="color:#fff; text-decoration:underline;">영혼</span>을 증명하십시오."
+        </div>
+
+        <button class="full-btn sss-start-btn" onclick="startSSSProject()">
+            ⚡ 최후의 프로젝트 시작
+        </button>
+    </div>
+</div>
+
+
         <div id="modal-overlay"></div>
         <div id="shop-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>장비 상점</h2><ul id="shop-list" class="item-list"></ul></div>
 <div id="inventory-popup" class="popup" style="min-height: 400px;">
@@ -1016,16 +1800,80 @@ button:active,
         <div id="planning-popup" class="popup" style="width: 320px;"><button class="close-btn" onclick="closePopup()">×</button><h2>새 프로젝트 기획</h2><input type="text" id="project-name" class="input-name" placeholder="프로젝트명 입력"><div class="select-group"><div class="select-col"><h3>주제 (Genre)</h3><div id="genre-list" class="scroll-box"></div></div><div class="select-col"><h3>스타일 (Style)</h3><div id="style-list" class="scroll-box"></div></div></div><button class="full-btn" onclick="confirmPlanning()">다음 단계</button></div>
         <div id="mission-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>전략 선택</h2><button class="full-btn" onclick="setStrategy('quality')">🎨 퀄리티 중심</button><button class="full-btn" style="background:#4CD964;" onclick="setStrategy('speed')">⚡ 속도 중심</button></div>
         
-        <div id="alba-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>알바 선택</h2><div class="card-btn"><div class="card-info"><h3>☕ 카페 알바</h3><p>+5만 / HP -20</p></div><button class="btn-action" id="btn-normal-alba" onclick="startWorking('normal')">출근</button></div><div class="card-btn"><div class="card-info"><h3>🔥 특급 야근</h3><p>+10만 (광고)</p></div><button class="btn-ad" onclick="trySpecialAlba()">지원</button></div></div>
-        
+<div id="alba-popup" class="popup">
+    <button class="close-btn" onclick="closePopup()">×</button>
+    <h2>자금 마련</h2>
+    
+    <div class="card-btn" onclick="startWorking('normal')">
+        <div class="card-info">
+            <h3>☕ 카페 알바</h3>
+            <p style="color:#B0B8C1">
+                보상: <span style="color:#fff; font-weight:bold;">5만원</span> 
+                <span style="color:#FF5F5F; margin-left:4px; font-weight:bold;">(HP -20)</span>
+            </p>
+        </div>
+        <button class="btn-action" style="background:rgb(223, 110, 110);">출근</button>
+    </div>
+
+    <div class="card-btn" onclick="startMiniGame()">
+        <div class="card-info">
+            <h3>🎨 단기 디자인 외주</h3>
+            <p style="color:#B0B8C1; font-size:12px;">
+                성공: 7만+스킬 <span>(HP -20)</span><br>
+                <span style="color:#888;">실패 시 보상 0원</span>
+            </p>
+        </div>
+        <button class="btn-action" style="background:#7274ED;">도전</button>
+    </div>
+
+    <div class="card-btn">
+        <div class="card-info">
+            <h3>🔥 특급 야근 (광고)</h3>
+            <p style="color:#B0B8C1">
+                보상: <span style="color:#FFD700; font-weight:bold;">10만원</span> 
+                <span style="color:#4CD964; margin-left:4px; font-weight:900;">(체력 소모 0)</span>
+            </p>
+        </div>
+        <button class="btn-ad" onclick="trySpecialAlba()">지원</button>
+    </div>
+</div>
+
         <div id="social-popup" class="popup">
             <button class="close-btn" onclick="closePopup()">×</button>
             <h2 id="social-title">사회생활</h2>
             <div id="social-content"></div>
         </div>
 
-        <div id="rest-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>휴식 선택</h2><div class="card-btn"><div class="card-info"><h3>☕ 커피 수혈</h3><p>HP +30 / 5천원</p></div><button class="btn-action" onclick="doRest('coffee')">마시기</button></div><div class="card-btn"><div class="card-info"><h3>🛌 꿀잠</h3><p>HP +60 / 무료</p></div><button class="btn-buy" onclick="doRest('sleep')">자기</button></div><div class="card-btn"><div class="card-info"><h3>✨ 온전한 힐링</h3><p>HP 100% / 광고</p></div><button class="btn-ad" onclick="showAd(function(){doRest('full')})">광고</button></div></div>
-        
+<div id="rest-popup" class="popup">
+    <button class="close-btn" onclick="closePopup()">×</button>
+    <h2>휴식 선택</h2>
+    
+    <div class="card-btn">
+        <div class="card-info">
+            <h3>☕ 커피 수혈</h3>
+            <p>HP +30 / 5천원</p>
+        </div>
+        <button class="btn-action" onclick="doRest('coffee')">마시기</button>
+    </div>
+
+    <div class="card-btn">
+        <div class="card-info">
+            <h3>🛌 꿀잠</h3>
+            <p>HP +60 / 무료</p>
+        </div>
+        <button class="btn-buy" onclick="doRest('sleep')">자기</button>
+    </div>
+
+    <div class="card-btn">
+        <div class="card-info">
+            <h3>✨ 온전한 힐링</h3>
+            <p style="color:#4CD964">HP 100% / 광고</p>
+        </div>
+<button class="btn-ad" onclick="showAd('HP_RECOVER', function(){ doRest('full') })">
+            광고 보고 회복
+        </button>
+    </div>
+</div>        
 <div id="p2-rest-popup" class="popup">
     <button class="close-btn" onclick="closePopup()">×</button>
     <h2>휴식 하기</h2>
@@ -1052,9 +1900,11 @@ button:active,
     <div class="card-btn" style="border:1px solid #7274ED">
         <div class="card-info">
             <h3>✈️ 해외여행 (광고)</h3>
-            <p>무료 (멘탈 완전 회복)</p>
+            <p style="color:#7274ED">무료 (멘탈 완전 회복)</p>
         </div>
-        <button class="btn-buy" onclick="showAd(function(){ doP2RestAction('full') })">떠나기</button>
+      <button class="btn-buy" onclick="showAd('HP_RECOVER', function(){ doP2RestAction('full') })">
+            떠나기
+        </button>
     </div>
 </div>
 
@@ -1097,18 +1947,35 @@ button:active,
         <button class="btn-buy" onclick="doP2SkillAction('deprep')">수강</button>
     </div>
 </div>
-        <div id="job-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>취업 시장</h2><div style="text-align:center; font-size:13px; color:#B0B8C1; margin-bottom:15px;">내 최고 점수: <span id="best-score" style="color:#fff; font-weight:700;">0</span>점<br><span style="color:#555; font-size:11px;">(2개월마다 갱신됩니다)</span></div><ul id="job-list" class="item-list"></ul><button class="btn-ad" onclick="showAd(function(){refreshJobs()})">공고 새로고침 (광고)</button></div>
+<div id="job-popup" class="popup">
+    <button class="close-btn" onclick="closePopup()">×</button>
+    <h2>취업 시장</h2>
+    
+    <div style="text-align:center; font-size:13px; color:#B0B8C1; margin-bottom:15px;">
+        내 최고 점수: <span id="best-score" style="color:#fff; font-weight:700;">0</span>점<br>
+        <span style="color:#555; font-size:11px;">(2개월마다 갱신됩니다)</span>
+    </div>
+    
+    <ul id="job-list" class="item-list"></ul>
+    
+    <button class="btn-ad" onclick="showAd('JOB_REFRESH', function(){ refreshJobs() })">
+        🔄 공고 새로고침 (광고)
+    </button>
+</div>
+
 <div id="exit-popup" class="popup-layer" style="display: none;">
     <div class="popup-content toss-style">
         <h3 class="popup-title">레벨 업! 디자이너를<br>종료할까요?</h3>
         
         <div class="popup-btn-group">
-            <button class="popup-btn btn-cancel" onclick="closeExitPopup()">닫기</button>
+            <button class="popup-btn btn-cancel" onclick="closeExitPopup()">취소</button>
             <button class="popup-btn btn-confirm" onclick="quitGame()">종료하기</button>
         </div>
     </div>
 </div>
-        <div id="settings-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>설정 (Settings)</h2><ul class="item-list"><li class="card-btn" onclick="closePopup(); openRankingPopup();"><div class="card-info"><h3 style="color:#FFD700">🏆 랭킹 확인</h3><p>나의 디자이너 순위 보기</p></div><div>></div></li><li class="card-btn" style="cursor: default;"><div class="card-info"><h3>배경음악</h3><p>게임 소리 켜기/끄기</p></div><label class="toggle-switch"><input type="checkbox" id="sound-toggle" checked onchange="toggleSound()"><span class="slider"></span></label></li><li class="card-btn" onclick="resetGameData()"><div class="card-info"><h3 style="color:#FF5F5F">데이터 초기화</h3><p>모든 진행 상황 삭제</p></div><div style="color:#FF5F5F; font-weight:700;">Reset</div></li></ul></div>
+        <div id="settings-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>설정 (Settings)</h2><ul class="item-list">
+           <li class="card-btn" onclick="closePopup(); openTossLeaderboard();">
+    <div class="card-info"><h3 style="color:#FFD700">🏆 랭킹 확인</h3><p>나의 디자이너 순위 보기</p></div><div>></div></li><li class="card-btn" style="cursor: default;"><div class="card-info"><h3>배경음악</h3><p>게임 소리 켜기/끄기</p></div><label class="toggle-switch"><input type="checkbox" id="sound-toggle" checked onchange="toggleSound()"><span class="slider"></span></label></li><li class="card-btn" onclick="resetGameData()"><div class="card-info"><h3 style="color:#FF5F5F">데이터 초기화</h3><p>모든 진행 상황 삭제</p></div><div style="color:#FF5F5F; font-weight:700;">Reset</div></li></ul></div>
         <div id="ranking-popup" class="popup"><button class="close-btn" onclick="closePopup()">×</button><h2>🏆 디자이너 랭킹</h2><div style="background:#333D4B; padding:15px; border-radius:12px; margin-bottom:15px; text-align:center;"><div style="font-size:12px; color:#B0B8C1;">나의 랭킹 점수</div><div id="my-rank-score" style="font-size:24px; font-weight:800; color:#FFD700; margin:5px 0;">0</div><div id="my-rank-text" style="font-size:14px; font-weight:600; color:#fff;">상위 ??%</div></div><ul id="ranking-list" class="item-list"></ul></div>
         <div id="meeting-popup" class="popup" style="z-index: 20002;">
     <h2 style="color:#7274ED;">☕ 킥오프 미팅</h2>
@@ -1152,39 +2019,39 @@ button:active,
         </div>
 
         <div id="success-popup">
-            <div class="paper-notice">
-                <div class="notice-header">
-                    <div class="deco-line"></div>
-                    <h2 class="notice-title">📜 최종 합격 통지서</h2>
-                    <div class="deco-line"></div>
-                    <div class="final-stamp">최종합격</div>
-                    <div class="approved-stamp">APPROVED</div>
-                </div>
-                
-                <div class="notice-body">
-                    <div class="char-stamp-box">
-                        <img src="assets/char_suit_front.png" class="success-char-img" alt="합격자 사진">
-                    </div>
-                    <div class="notice-text">
-                        귀하는 압도적인 실력으로 당사의 채용 심사를 통과하여,
-                        <strong id="success-company" class="company-name">(주)회사명</strong>의
-                        핵심 디자이너로 최종 선발되었음을 알립니다.
-                    </div>
-                </div>
+    <div class="paper-notice" style="padding: 40px 30px;">
+        <div class="notice-header">
+            <div class="deco-line"></div>
+            <h2 class="notice-title" style="font-size: 24px; margin: 15px 0;">최종 합격 통지서</h2>
+            <div class="deco-line"></div>
+            <div class="final-stamp">합격</div>
+            <div class="approved-stamp">APPROVED</div>
+        </div>
+        
+<div class="notice-text" style="font-size: 16px; line-height: 1.8;">
+    귀하는 당사의 채용 전형에서<br>
+    우수한 역량을 입증하였기에,<br>
+    
+    <div style="margin: 20px 0; font-size: 22px; color: #333;">
+        <strong id="success-company" class="company-name">(주)회사명</strong>의
+    </div>
+    정규직 디자이너로 선발되었습니다.<br>
+    <br>
+    함께하게 되어 영광입니다.
+</div>
 
-                <div class="score-box">
-                    <div class="score-label">🎖️ 최종 디자이너 평가 점수</div>
-                    <div class="score-value"><span id="success-score">0</span> 점</div>
-                    <div class="score-desc">"당신의 노력이 증명된 순간입니다."</div>
-                </div>
-
-                <div class="notice-footer">
-                    <p>📅 <strong>출근:</strong> 다음주 월요일 09:00 (판교 사옥)</p>
-                    <p class="footer-note">* 준비물: 튼튼한 몸, 꺾이지 않는 마음</p>
-                    <button class="full-btn sign-btn" onclick="startPhase2()">서명하고 출근하기 (새로운 시작)</button>
-                </div>
+        <div class="notice-footer" style="margin-top: 40px; border-top: 1px dashed #ddd; padding-top: 20px;">
+            <p>📅 <strong>출근 일자:</strong> 다음주 월요일 09:00</p>
+            <button class="full-btn sign-btn" onclick="startPhase2()" style="margin-top: 15px;">
+                서명하고 입사하기 (Accept)
+            </button>
+            
+            <div onclick="openTossLeaderboard()" style="margin-top: 15px; font-size: 12px; color: #B0B8C1; text-decoration: underline; cursor: pointer;">
+                내 합격 점수 랭킹 확인하기
             </div>
         </div>
+    </div>
+</div>
         <div id="payday-popup" class="popup" style="z-index: 21000; text-align:center;">
     <h2 style="color:#4CD964; border-bottom:1px solid #444; padding-bottom:10px;">💵 급여 명세서</h2>
     
@@ -1205,7 +2072,7 @@ button:active,
     </div>
     
     <p id="pay-msg" style="font-size:13px; color:#B0B8C1; margin-bottom:15px;">"이번 달도 고생 많으셨습니다."</p>
-    <button class="full-btn" onclick="closePopup()">확인 (입금 완료)</button>
+    <button class="full-btn" onclick="confirmPayday()">확인 (입금 완료)</button>
 </div>
         <div id="ad-overlay"><h1>ADVERTISEMENT</h1><p>(3초 후 닫기)</p><button onclick="closeAd()" style="margin-top:20px; padding:10px;">닫기</button></div>
         <div id="hall-of-fame-popup" class="popup" style="z-index: 20005;">
@@ -1213,6 +2080,7 @@ button:active,
     <div style="text-align:center; color:#B0B8C1; font-size:12px; margin-bottom:15px;">
         S급 프로젝트를 전시하여 영구 버프를 획득하세요.<br>(최대 3개 슬롯)
     </div>
+
 
     <div style="background:#333; padding:10px; border-radius:8px; margin-bottom:15px; font-size:13px;">
         <span style="color:#4CD964">💰 연봉 +<span id="hof-wealth">0</span>%</span> | 
@@ -1245,13 +2113,41 @@ button:active,
                     <span style="color:#4CD964;">(광고 시청 시 마감 +1주 연장)</span>
                 </div>
             </div>
-            <button class="btn-ad" onclick="closePopup(); showAd(function(){doExtendDeadline()})">
+          <button class="btn-ad" onclick="closePopup(); showAd('EXTEND_DEAD', function(){doExtendDeadline()})">
                 📞 전화 걸기 (광고 시청)
             </button>
             <button class="full-btn" style="background:#454F5D; margin-top:10px;" onclick="closePopup()">
                 ✋ 아니요, 밤새서 끝냅니다.
             </button>
         </div>
+
+<div id="extension-success-popup" class="popup" style="z-index: 22000;">
+    <div class="call-anim-icon">📞</div>
+    
+    <h2 style="color:#fff; margin-bottom:5px;">협상 성공!</h2>
+    <p style="color:#B0B8C1; font-size:12px; margin-bottom:20px;">클라이언트와 통화가 연결되었습니다.</p>
+
+    <div class="client-bubble-box">
+        <span class="client-name">CLIENT</span>
+        <div class="client-text">
+            "하아... 알겠습니다. 이번만 봐드리는 겁니다.<br>
+            대신 퀄리티는 확실하게 뽑아주세요."
+        </div>
+    </div>
+
+<div class="result-badge-row">
+    <div class="res-badge badge-green">
+        <span>📅</span> 마감 +1주 연장
+    </div>
+    
+    <div class="res-badge badge-red">
+        <span>🚫</span> 재사용 불가
+    </div>
+</div>
+
+    <button class="full-btn" onclick="closePopup()">감사합니다! (복귀)</button>
+</div>
+
         <div id="tutorial-overlay" style="display:none;">
     <div class="tuto-dialog">
         <span id="tuto-name" class="tuto-name"></span>
@@ -1259,7 +2155,101 @@ button:active,
         <button id="tuto-btn" class="tuto-next-btn" onclick="nextTutorialLine()"></button>
     </div>
 </div>
-<div id="cheat-panel" style="position: absolute; top: 90px; left: 10px; z-index: 99999; display: flex; flex-direction: column; gap: 6px;">
+
+<div id="museum-popup" class="popup" style="z-index: 20010;">
+    <button class="close-btn" onclick="closePopup()">×</button>
+    
+    <h2 style="color:#FFD700; text-align:center; margin-bottom:10px;">
+        🏛️ 디자인 박물관
+    </h2>
+
+    <div class="museum-guide-box">
+        <h4 style="margin:0 0 5px 0; color:#fff;">📜 큐레이터의 메모</h4>
+        <p>
+            "이곳엔 전설적인 디자이너의 유물만 전시됩니다.<br>
+            <span style="color:#FFD700;">Space(우주) 티어</span> 기업에서 
+            <span style="color:#FF5F5F;">SS급 걸작(Masterpiece)</span>을<br> 
+            수행하여 빈 전시관을 채워보세요."
+        </p>
+    </div>
+    <div style="text-align:right; color:#B0B8C1; font-size:12px; margin-bottom:5px; margin-top:10px;">
+        수집 현황: <span id="museum-count" style="color:#fff; font-weight:bold;">0</span>/10
+    </div>
+
+    <div id="museum-grid" class="museum-grid">
+        </div>
+</div>
+<div id="minigame-popup" class="popup" style="display:none; text-align:center; z-index: 50000; background:rgba(255,255,255,0.98); border:2px solid #333;">
+    <h3 style="color:#333; margin-bottom:5px;">⚡ 사장님의 돌발 미션!</h3>
+    <p style="color:#666; font-size:14px; margin-bottom:20px;">
+        "자네 디자인과지? 이것 좀 정렬해줘!"<br>
+        <span style="color:#FF5F5F; font-size:12px;">(빨간 선에 겹칠 때 STOP 누르기)</span>
+    </p>
+
+    <div class="game-track-container">
+        <div class="center-line"></div>
+        <div id="moving-block" class="moving-block"></div>
+    </div>
+
+    <div id="minigame-msg" style="height:20px; font-weight:bold; margin-bottom:15px; color:#333; font-size:14px;"></div>
+
+    <button id="minigame-action-btn" class="full-btn" onclick="stopMovingBlock()" style="background:#333; color:#fff;">STOP!</button>
+</div>
+
+<div id="crisis-warning-popup" class="popup" style="display:none; z-index: 62000; text-align:center; border: 2px solid #FF5F5F; background: #fff; color:#333; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width: 300px;">
+    <div style="font-size:50px; margin-bottom:15px;">⚠️</div>
+    <h2 style="color:#333; font-size:20px; margin-bottom:10px;">프로그램 응답 없음</h2>
+    <p style="color:#666; font-size:14px; margin-bottom:20px; line-height:1.5;">
+        작업 중 치명적 오류 발생!<br>
+        강제 종료를 막으려면 복구하세요.
+    </p>
+    <button class="full-btn" onclick="realStartCrisis()" style="background:#FF5F5F; color:white; font-weight:bold; animation: blink 1s infinite;">
+        🚨 긴급 복구 시도
+    </button>
+</div>
+
+<div id="crisis-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index: 60000; background:#0078D7; text-align:center;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:320px;">
+        <div style="font-size:60px; margin-bottom:20px;">😵</div>
+        <h2 style="color:#fff; font-size:24px; margin-bottom:10px;">Blue Screen</h2>
+        <p style="color:#fff; font-size:15px; margin-bottom:30px; line-height:1.4;">
+            데이터 손실 위험!<br>
+            <span style="color:#FFD700; font-weight:bold;">버튼을 연타</span>하여 게이지를 채우세요!
+        </p>
+
+        <div class="save-bar-container">
+            <div id="save-bar-fill" class="save-bar-fill"></div>
+            <span id="save-text" style="z-index:2;">SAVING... 50%</span>
+        </div>
+
+        <button id="mash-btn" onclick="mashSaveButton()" style="
+            width:100%; padding:20px; background:#fff; color:#0078D7; border:none; 
+            border-radius:12px; font-weight:900; font-size:22px; margin-top:30px; 
+            box-shadow:0 6px 0 #005a9e; cursor:pointer;">
+            SAVE !!! (연타)
+        </button>
+    </div>
+</div>
+
+<div id="crash-popup" class="popup" style="display:none; z-index: 61000; text-align:center; border:2px solid #FF5F5F;">
+    <div style="font-size:50px; margin-bottom:15px;">💀</div>
+    <h2 style="color:#FF5F5F;">치명적인 오류</h2>
+    <p style="color:#B0B8C1; font-size:14px; margin-bottom:20px;">
+        "예기치 않게 프로그램이 종료되었습니다."<br>
+        작업한 내용이 모두 사라집니다.
+    </p>
+
+  <button class="btn-ad" onclick="recoverCrash()">
+        💾 데이터 복구 (광고 시청)
+    </button>
+    
+    <button class="full-btn" style="background:#454F5D; margin-top:10px;" onclick="acceptCrash()">
+        😭 그냥 포기하겠습니다
+    </button>
+</div>
+
+
+<div id="cheat-panel" style="position: absolute; top: 340px; left: 10px; z-index: 99999; display: flex; flex-direction: column; gap: 6px;">
     <button onclick="cheatLevelUp()" style="background:rgba(0,0,0,0.8); color:#fff; border:1px solid #9956DE; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
         🆙 스킬 +100
     </button>
@@ -1272,12 +2262,22 @@ button:active,
         ❤️ 체력 풀회복
     </button>
 
+    <button onclick="triggerDesignAward()" style="background:rgba(0,0,0,0.8); color:#fff; border:1px solid #FF6347; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+        🏆 어워드 개최
+    </button>
+
+    <button onclick="testTrueEnding()" style="background:rgba(0,0,0,0.8); color:#FFD700; border:1px solid #FFD700; padding:6px 12px; border-radius:8px; font-size:11px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">
+        🌌 진 엔딩(SSS)
+    </button>
     <button onclick="toggleCheatPanel()" style="background:#555; color:#aaa; border:none; padding:0; height:10px; border-radius:4px; margin-top:2px; cursor:pointer;"></button>
 </div>
-    </div>
+    
 
-    <script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+<script>
         // 전역 변수 선언 (함수 바깥에 있어야 함)
+        let tossUserHash = 'guest'; // 토스 유저 식별값 (기본: guest)
         let bgSprite;
         let sceneContext, sceneOverlay, sceneImage, sceneDialogText;
         let portfolioOverlay, pfDialogText, adCallback = null;
@@ -1286,8 +2286,11 @@ button:active,
         let charHoodieSprite, charSuitSprite;
         let charWorkSprite, charSuitWorkSprite;
         let overlayContainer, overlayText; 
-        let soundIntro, soundP1, soundP2, soundClick;
+        let soundP1, soundP2, soundClick;
         let soundEnding;
+        let soundAI;
+        let soundSSS; // ★ SSS급 전용 BGM 변수
+        let pendingRivalTarget = 0; // 경고창에서 컷신으로 점수 넘겨줄 변수
         // [면접 쿨타임 저장소] { "회사이름": 잠금해제시간(Timestamp) }
 let interviewCooldowns = {};
 let currentBgm = null;
@@ -1342,125 +2345,136 @@ const naggingMsgs = [
     "누구는 벌써 대리 달았다던데... 넌 계획이 있니?",
     "일 안 할 거면 기술이라도 배워라..."
 ];
-  // [Ver 78.0 Update] 면접 질문 데이터 대폭 확장 (총 15종)
-const interviewData = [
+  const interviewData = [
     // ----------------------------------------------------
-    // [기존 질문: 업무 스타일]
+    // [1. 업무 스타일 & 가치관]
     // ----------------------------------------------------
     {
-        q: "마감이 코앞인데, 더 획기적인 아이디어가 떠올랐다면?",
+        q: "마감이 10분 남았는데, 치명적인 오타를 발견했다면?",
         a: [
-            { text: "일단 마감을 지키는 게 프로입니다.", type: 'L', effect: {P:0, L:5, S:-2} },
-            { text: "팀을 설득해서라도 적용해봅니다.", type: 'P', effect: {P:6, L:-2, S:0} },
-            { text: "다음 프로젝트를 위해 메모해둡니다.", type: 'S', effect: {P:-2, L:2, S:4} }
+            { text: "제출이 우선! 일단 보내고 나중에 수정한다.", type: 'L', effect: {P:0, L:12, S:-8} }, // (논리↑ / 센스↓) : 실리를 챙김
+            { text: "품질이 우선! 늦더라도 고쳐서 보낸다.", type: 'P', effect: {P:12, L:-8, S:0} }, // (열정↑ / 논리↓) : 장인정신, 납기어김
+            { text: "오타가 아니라 '디자인적 허용'이라고 우긴다.", type: 'S', effect: {P:-5, L:-5, S:15} } // (센스↑↑ / 나머지↓↓) : 미친 순발력
         ]
     },
     {
-        q: "단순 반복 작업(누끼 따기)만 계속 주어진다면?",
+        q: "우리 회사는 야근 수당이 없는데, 괜찮으신가요?",
         a: [
-            { text: "자동화 툴이나 효율적 방법을 찾습니다.", type: 'L', effect: {P:0, L:6, S:0} },
-            { text: "기초를 다지는 과정이라 생각하고 버팁니다.", type: 'P', effect: {P:6, L:0, S:-2} },
-            { text: "작업하며 새로운 스타일을 연구해봅니다.", type: 'S', effect: {P:0, L:-2, S:6} }
-        ]
-    },
-    
-    // ----------------------------------------------------
-    // [신규 질문: 협업 & 커뮤니케이션]
-    // ----------------------------------------------------
-    {
-        q: "개발자가 '이 디자인은 구현 불가능해요'라고 한다면?",
-        a: [
-            { text: "왜 안 되는지 기술적 이유를 물어봅니다.", type: 'L', effect: {P:0, L:7, S:-2} }, // 논리적 접근
-            { text: "최대한 비슷한 타협점을 제안합니다.", type: 'S', effect: {P:-2, L:2, S:5} }, // 유연함
-            { text: "구현 가능한 레퍼런스를 찾아 설득합니다.", type: 'P', effect: {P:5, L:0, S:0} }  // 끈기
+            { text: "성장할 수만 있다면 돈은 중요하지 않습니다!", type: 'P', effect: {P:15, L:-10, S:-5} }, // (열정 폭발 / 논리 박살) : 호구? 열정?
+            { text: "업무 시간에 집중해서 야근을 안 하겠습니다.", type: 'L', effect: {P:-8, L:15, S:0} }, // (논리 폭발 / 열정 부족) : 칼퇴 선언
+            { text: "그럼 저녁 식대는 법카로 주시나요? (웃음)", type: 'S', effect: {P:0, L:0, S:10} } // (센스) : 위트 있게 넘김
         ]
     },
     {
-        q: "마케터가 '로고 좀 더 크게, 빨갛게'를 요구한다면?",
+        q: "상사가 촌스러운 '굴림체'를 쓰라고 강요한다면?",
         a: [
-            { text: "디자인 가이드를 근거로 방어합니다.", type: 'L', effect: {P:0, L:6, S:-2} },
-            { text: "요구사항을 반영하되, 미적으로 다듬습니다.", type: 'S', effect: {P:-2, L:-2, S:8} }, // 압도적 센스
-            { text: "A안, B안을 모두 만들어 비교해줍니다.", type: 'P', effect: {P:6, L:0, S:-2} } // 열정 노동
+            { text: "존경하는 상사님의 안목을 믿고 따릅니다.", type: 'P', effect: {P:10, L:-5, S:-10} }, // (사회생활 만렙 / 감각 포기)
+            { text: "가독성 데이터를 근거로 다른 폰트를 설득합니다.", type: 'L', effect: {P:0, L:12, S:0} }, // (정석 논리)
+            { text: "굴림체를 힙(Hip)하게 보이도록 레이아웃을 짭니다.", type: 'S', effect: {P:0, L:-5, S:15} } // (디자인 차력쇼)
         ]
     },
     {
-        q: "팀 프로젝트에서 무임승차하는 동료가 있다면?",
+        q: "연봉과 워라밸, 그리고 명예 중 하나만 택한다면?",
         a: [
-            { text: "제가 그 사람 몫까지 다 합니다.", type: 'P', effect: {P:7, L:-3, S:0} }, // 호구? 열정?
-            { text: "업무 분장표를 명확히 하여 책임을 묻습니다.", type: 'L', effect: {P:-2, L:7, S:0} },
-            { text: "술 한잔 사주며 동기부여를 해줍니다.", type: 'S', effect: {P:2, L:-2, S:5} } // 사회생활 센스
+            { text: "회사의 명예가 곧 저의 명예입니다.", type: 'P', effect: {P:12, L:0, S:-5} }, // (충성심)
+            { text: "금융 치료(연봉)가 최고의 복지죠.", type: 'L', effect: {P:0, L:10, S:5} }, // (현실적)
+            { text: "칼퇴 후 즐기는 취미(워라밸)입니다.", type: 'S', effect: {P:-10, L:0, S:12} } // (솔직함)
+        ]
+    },
+    {
+        q: "아무리 생각해도 이 기획은 망할 것 같다면?",
+        a: [
+            { text: "팀의 결정이니 끝까지 최선을 다해 완주한다.", type: 'P', effect: {P:15, L:-5, S:0} }, // (군말 없는 실행)
+            { text: "망하는 이유를 3가지로 요약해 보고한다.", type: 'L', effect: {P:-5, L:15, S:-5} }, // (팩트 폭격기)
+            { text: "제 디자인으로 심폐소생술을 시도해 봅니다.", type: 'S', effect: {P:5, L:-5, S:10} } // (자신감)
         ]
     },
 
     // ----------------------------------------------------
-    // [신규 질문: 멘탈 & 가치관]
+    // [2. 대인 관계 & 커뮤니케이션]
     // ----------------------------------------------------
     {
-        q: "우리 회사의 단점이 무엇이라고 생각하나요?",
+        q: "개발자가 '기술적으로 구현 불가능해요'라고 눕는다면?",
         a: [
-            { text: "단점은 없고, 성장 가능성만 보입니다!", type: 'P', effect: {P:5, L:-5, S:-2} }, // 아부성
-            { text: "UI의 통일성이 조금 부족해 보입니다.", type: 'L', effect: {P:0, L:6, S:0} }, // 냉철한 분석
-            { text: "브랜드 컬러가 조금 올드한 느낌입니다.", type: 'S', effect: {P:-2, L:0, S:6} } // 감각적 지적
-        ]
-    },
-    {
-        q: "연봉과 워라밸, 무엇이 더 중요한가요?",
-        a: [
-            { text: "회사가 성장한다면 야근도 즐겁습니다.", type: 'P', effect: {P:8, L:0, S:-3} }, // 광기
-            { text: "효율적으로 일하고 정시 퇴근하는 게 최고죠.", type: 'L', effect: {P:-3, L:7, S:0} },
-            { text: "돈 많이 주는 곳이 곧 복지라고 생각합니다.", type: 'S', effect: {P:0, L:3, S:4} } // 솔직함
+            { text: "제가 코딩을 배워서라도 직접 돕겠습니다.", type: 'P', effect: {P:18, L:-5, S:-5} }, // (광기)
+            { text: "비슷한 레퍼런스를 찾아 기술적 가능성을 제시함.", type: 'L', effect: {P:0, L:12, S:0} }, // (팩트 체크)
+            { text: "개발자님이 좋아하는 커피를 사 들고 읍소한다.", type: 'S', effect: {P:0, L:-5, S:15} } // (뇌물 공세)
         ]
     },
     {
         q: "클라이언트가 '그냥 알아서 예쁘게 해주세요'라고 한다면?",
         a: [
-            { text: "제 감각을 믿고 시안을 만듭니다.", type: 'S', effect: {P:0, L:-3, S:7} },
-            { text: "구체적인 질문을 던져 의도를 파악합니다.", type: 'L', effect: {P:0, L:6, S:0} },
-            { text: "다양한 스타일로 5개 정도 준비해갑니다.", type: 'P', effect: {P:6, L:-2, S:0} }
+            { text: "제 감각을 믿고 예술 작품을 만듭니다.", type: 'S', effect: {P:0, L:-10, S:18} }, // (위험한 예술가)
+            { text: "구체적인 레퍼런스 10장을 보여주며 취향을 좁힘.", type: 'L', effect: {P:0, L:12, S:0} }, // (안전 제일)
+            { text: "밤을 새워서라도 A, B, C안 3개를 준비해감.", type: 'P', effect: {P:15, L:-5, S:0} } // (몸으로 때우기)
+        ]
+    },
+    {
+        q: "팀 프로젝트에서 무임승차(프리라이더)하는 동료가 있다면?",
+        a: [
+            { text: "제가 그 사람 몫까지 두 배로 일합니다.", type: 'P', effect: {P:15, L:-10, S:0} }, // (호구형 인재)
+            { text: "업무 분장표와 기여도를 엑셀로 정리해 보고함.", type: 'L', effect: {P:-5, L:15, S:-5} }, // (냉철한 심판관)
+            { text: "저녁을 사주며 '잘 좀 하자'고 회유한다.", type: 'S', effect: {P:0, L:0, S:12} } // (정치력)
+        ]
+    },
+    {
+        q: "탕비실에 간식이 다 떨어졌는데, 배가 고프다면?",
+        a: [
+            { text: "제 사비로 간식을 채워 팀원들과 나눕니다.", type: 'P', effect: {P:12, L:-5, S:5} }, // (천사표)
+            { text: "총무팀에 정식 공문을 보내 보급을 요청함.", type: 'L', effect: {P:0, L:10, S:-5} }, // (절차 중시)
+            { text: "배고픔을 예술적 영감으로 승화시킵니다.", type: 'S', effect: {P:0, L:-5, S:15} } // (4차원)
+        ]
+    },
+    {
+        q: "옆자리 동료가 하루 종일 한숨을 쉰다면?",
+        a: [
+            { text: "무슨 일 있냐며 조용히 티타임을 요청한다.", type: 'S', effect: {P:0, L:0, S:12} }, // (공감 능력)
+            { text: "제 업무 리듬이 깨지니 자제해달라고 말한다.", type: 'L', effect: {P:-5, L:15, S:-10} }, // (마이웨이)
+            { text: "저도 같이 한숨을 쉬며 화음을 넣습니다.", type: 'P', effect: {P:5, L:-5, S:5} } // (개그 욕심)
         ]
     },
 
     // ----------------------------------------------------
-    // [신규 질문: 돌발 상황]
+    // [3. 돌발 상황 & 창의성] (점수 변동폭 큼)
     // ----------------------------------------------------
-    {
-        q: "인쇄물 1만 장을 찍었는데 오타를 발견했다면?",
-        a: [
-            { text: "제 사비로라도 스티커를 제작해 붙이겠습니다.", type: 'P', effect: {P:8, L:-2, S:0} }, // 책임감
-            { text: "오타가 아니라 디자인적 허용이라고 우깁니다.", type: 'S', effect: {P:-5, L:-5, S:8} }, // 미친 센스?
-            { text: "즉시 보고하고 수습 비용을 최소화합니다.", type: 'L', effect: {P:0, L:6, S:0} } // 정석
-        ]
-    },
-    {
-        q: "탕비실에 간식이 다 떨어졌다면?",
-        a: [
-            { text: "제 개인 카드로 채워 넣습니다.", type: 'P', effect: {P:5, L:-3, S:0} },
-            { text: "총무팀에 정식으로 요청 메일을 보냅니다.", type: 'L', effect: {P:0, L:5, S:0} },
-            { text: "배고픔을 승화시켜 디자인에 녹여냅니다.", type: 'S', effect: {P:0, L:0, S:6} } // 예술혼
-        ]
-    },
     {
         q: "내일 지구가 멸망한다면 오늘 무엇을 디자인하겠나?",
         a: [
-            { text: "지구 탈출용 우주선 UI를 그리겠습니다.", type: 'L', effect: {P:0, L:5, S:3} },
-            { text: "마지막까지 회사 로고를 다듬겠습니다.", type: 'P', effect: {P:10, L:-5, S:0} }, // 광기
-            { text: "'지구 마감 세일' 포스터를 만들겠습니다.", type: 'S', effect: {P:0, L:0, S:8} } // 위트
+            { text: "지구 탈출용 우주선 UI를 그리겠습니다.", type: 'L', effect: {P:0, L:12, S:5} },
+            { text: "마지막까지 회사 로고를 다듬겠습니다.", type: 'P', effect: {P:20, L:-10, S:-5} }, // (미친 인재)
+            { text: "'지구 마감 세일' 포스터를 만듭니다.", type: 'S', effect: {P:0, L:0, S:15} }
         ]
     },
     {
-        q: "디자이너에게 가장 필요한 도구는?",
+        q: "디자이너에게 가장 필요한 도구는 무엇인가?",
         a: [
-            { text: "최신형 맥북과 타블렛입니다.", type: 'L', effect: {P:0, L:5, S:0} }, // 장비빨
-            { text: "꺾이지 않는 마음(중마)입니다.", type: 'P', effect: {P:7, L:0, S:0} },
-            { text: "영감을 주는 핀터레스트입니다.", type: 'S', effect: {P:0, L:0, S:6} }
+            { text: "최신형 맥북과 와콤 타블렛입니다.", type: 'L', effect: {P:0, L:10, S:0} }, // (장비빨)
+            { text: "어떤 피드백도 견디는 '강철 멘탈'입니다.", type: 'P', effect: {P:15, L:0, S:0} }, // (중꺾마)
+            { text: "영감을 주는 핀터레스트와 인스타입니다.", type: 'S', effect: {P:0, L:-5, S:12} }
         ]
     },
     {
-        q: "상사가 촌스러운 폰트(굴림체)를 쓰라고 강요한다면?",
+        q: "인쇄물 1만 장을 찍었는데 색감이 잘못 나왔다면?",
         a: [
-            { text: "상사의 취향을 존중해 그대로 씁니다.", type: 'P', effect: {P:4, L:0, S:-4} }, // 사회생활
-            { text: "굴림체도 힙하게 보이도록 레이아웃을 짭니다.", type: 'S', effect: {P:0, L:0, S:8} }, // 능력자
-            { text: "가독성 데이터를 근거로 다른 폰트를 제안합니다.", type: 'L', effect: {P:0, L:6, S:0} }
+            { text: "전량 폐기하고 제 월급에서 까주십시오!", type: 'P', effect: {P:18, L:-10, S:0} }, // (책임감 과다)
+            { text: "이게 요즘 유행하는 '빈티지 컬러'라고 우긴다.", type: 'S', effect: {P:-5, L:-10, S:20} }, // (사기꾼 기질)
+            { text: "오차 범위를 분석해 재발 방지 대책을 세운다.", type: 'L', effect: {P:0, L:15, S:0} } // (수습 전문가)
+        ]
+    },
+    {
+        q: "면접관인 제 넥타이 색깔, 어떻게 생각하세요?",
+        a: [
+            { text: "회사 로고 컬러와 매칭되어 애사심이 느껴집니다!", type: 'P', effect: {P:12, L:0, S:5} }, // (아부)
+            { text: "채도와 명도가 피부톤과 아주 잘 어울리십니다.", type: 'L', effect: {P:0, L:12, S:0} }, // (분석적 칭찬)
+            { text: "사실 좀... 올드해 보입니다. (솔직)", type: 'S', effect: {P:-5, L:0, S:15} } // (패션 지적질 - 호불호 갈림)
+        ]
+    },
+    {
+        q: "로또 1등에 당첨되면 내일 출근 하실 건가요?",
+        a: [
+            { text: "당연하죠! 저는 일이 너무 즐겁습니다! (거짓)", type: 'P', effect: {P:10, L:-10, S:-5} }, // (너무 티나는 거짓말)
+            { text: "인수인계는 끝내고 퇴사하겠습니다. (정색)", type: 'L', effect: {P:-5, L:15, S:0} }, // (책임감은 있음)
+            { text: "사장님, 얼마면 회사를 파시겠습니까?", type: 'S', effect: {P:0, L:-5, S:18} } // (플렉스)
         ]
     }
 ];
@@ -1751,9 +2765,23 @@ const clientMentions = [
             Unicorn: ["슈퍼앱 통합", "신규 서비스 런칭", "UX 리서치", "글로벌 프로덕트"],
             Global: ["전사적 OS 구축", "다국어 플랫폼", "AI 인터페이스", "접근성 개선"],
             Space: ["화성 거주지 OS", "우주선 관제 UI", "외계어 번역기", "무중력 UX"]
+            
         };
-        
-        const RANKS = ["사원", "대리", "팀장", "이사"];
+        // [신규] SS급 마스터피스 (박물관 전시용) 데이터
+const masterpiecePool = [
+    { name: "화성 거주지 헌법", desc: "인류의 새로운 규칙을 새기다" },
+    { name: "지구 연방 화폐", desc: "전 지구적 경제 통합의 상징" },
+    { name: "외계 문명 시각 언어", desc: "말하지 않아도 통하는 우주의 언어" },
+    { name: "인류 기억 타임캡슐", desc: "우리의 역사를 영원히 보존하다" },
+    { name: "다이슨 스피어 설계도", desc: "태양 에너지를 감싸는 거대 구조물" },
+    { name: "초공간 워프 게이트 UI", desc: "공간을 접는 기술의 인터페이스" },
+    { name: "AI 인권 선언문", desc: "기계와 인간의 공존을 디자인하다" },
+    { name: "은하계 올림픽 엠블럼", desc: "전 우주가 하나 되는 축제" },
+    { name: "불로장생 유전자 키트", desc: "죽음을 극복한 디자인" },
+    { name: "제2의 지구 테라포밍", desc: "황무지를 낙원으로 바꾸는 청사진" }
+];
+    // [수정] 직급 배열 확장 (5단계 '전설' 추가)
+const RANKS = ["사원", "대리", "팀장", "이사", "전설"];
         
 // [Ver 62.1] 급여 현실화 (너무 퍼주지 않음)
 const BASE_SALARY = { 
@@ -1807,7 +2835,8 @@ const dadJokes = [
             currentProject: null,
             isTutorialDone: false, 
             isP2TutorialDone: false,
-            idleWeeks: 0
+            idleWeeks: 0,
+            museum: [] // 수집한 Masterpiece 프로젝트가 여기에 저장됨
     
         };
         let player = JSON.parse(JSON.stringify(initialPlayerState)); 
@@ -1858,68 +2887,94 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-        function preload() {
-            this.load.image('bg_main', 'assets/bg_main.png'); 
-            this.load.image('bg_alba', 'assets/bg_alba.png'); 
-            this.load.image('bg_office', 'assets/bg_office.png'); 
+function preload() {
+    // 1. [핵심] 현재 실행 중인 index.html의 "진짜 주소(절대 경로)"를 찾아냅니다.
+    // 예: https://toss.im/miniapp/1234/
+    const absoluteBaseURL = new URL('.', window.location.href).href;
+    
+    // 2. Phaser에게 "모든 파일은 이 절대 주소 밑의 assets/에서 가져와!"라고 명령합니다.
+    // 이렇게 하면 './' 같은 상대 경로가 꼬일 일이 0%가 됩니다.
+    this.load.setBaseURL(absoluteBaseURL);
+    this.load.path = 'assets/'; 
+
+    console.log("리소스 로딩 시작 (절대 경로 모드):", absoluteBaseURL + 'assets/');
+
+    // 3. 이미지 로드 (파일명만 입력)
+    // 실제 요청 주소는 "https://.../assets/bg_main.png" 처럼 변환됩니다.
+    this.load.image('bg_main', 'bg_main.png'); 
+    this.load.image('bg_alba', 'bg_alba.png'); 
+    this.load.image('bg_office', 'bg_office.png'); 
+    
+    this.load.image('bg_toptier', 'bg_toptier.png');
+    this.load.image('bg_unicorn', 'bg_unicorn.png');
+    this.load.image('bg_global', 'bg_global.png');
+    this.load.image('bg_space', 'bg_space.png');
+    
+    this.load.image('bg_main_night', 'bg_main_night.png');
+    this.load.image('bg_office_night', 'bg_office_night.png');
+    this.load.image('bg_toptier_night', 'bg_toptier_night.png');
+    this.load.image('bg_unicorn_night', 'bg_unicorn_night.png');
+    this.load.image('bg_global_night', 'bg_global_night.png');
+    this.load.image('bg_space_night', 'bg_space_night.png');
             
-            // [수정됨] 무조건 .png로 로드 (파일명 통일 필수)
-            this.load.image('bg_toptier', 'assets/bg_toptier.png');
-            this.load.image('bg_unicorn', 'assets/bg_unicorn.png');
-            this.load.image('bg_global', 'assets/bg_global.png');
-            this.load.image('bg_space', 'assets/bg_space.png');
-            this.load.image('bg_main_night', 'assets/bg_main_night.png');
-    this.load.image('bg_office_night', 'assets/bg_office_night.png');
-    this.load.image('bg_toptier_night', 'assets/bg_toptier_night.png');
-    this.load.image('bg_unicorn_night', 'assets/bg_unicorn_night.png');
-    this.load.image('bg_global_night', 'assets/bg_global_night.png');
-    this.load.image('bg_space_night', 'assets/bg_space_night.png');
+    this.load.image('bg_netflix', 'bg_netflix.png');
+    this.load.image('bg_tenis', 'bg_tenis.png');
+    this.load.image('bg_travel', 'bg_travel.png');
+
+    this.load.image('scene_study', 'scene_study.png');       
+    this.load.image('scene_burning', 'scene_burning.png'); 
+    this.load.image('bg_sleep', 'bg_sleep.png');
+    this.load.image('bg_empty_room', 'bg_empty_room.png'); 
+    
+    this.load.image('char_hoodie_front', 'char_hoodie_front.png'); 
+    this.load.image('char_suit_front', 'char_suit_front.png'); 
+    this.load.image('item_mouse_basic.png', 'item_mouse_basic.png'); 
+    
+    this.load.image('char_work', 'char_work.png');       
+    this.load.image('char_work_2', 'char_work_2.png');   
+    this.load.image('char_work_3', 'char_work_3.png');   
+    this.load.image('char_work_4', 'char_work_4.png');   
+
+    this.load.image('char_suit_work', 'char_suit_work.png');     
+    this.load.image('char_suit_work_2', 'char_suit_work_2.png'); 
+    this.load.image('char_suit_work_3', 'char_suit_work_3.png'); 
+    this.load.image('char_suit_work_4', 'char_suit_work_4.png'); 
+    
+    this.load.image('intro_bg', 'intro_bg.png');
+    this.load.image('intro_logo', 'intro_logo.png');
+    this.load.image('ai', 'ai.png');
+    this.load.image('sss_intro', 'sss_intro.png');
+
+    // 사운드
+    this.load.audio('bgm_p1', ['bgm_p1.ogg', 'bgm_p1.m4a']);
+    this.load.audio('bgm_p2', ['bgm_p2.ogg', 'bgm_p2.m4a']);
+    this.load.audio('sfx_btn', 'sfx_btn.wav');
+    this.load.audio('sfx_ending', ['sfx_ending.ogg','sfx_ending.m4a']);
+    this.load.audio('bgm_ai', ['bgm_ai.ogg', 'bgm_ai.m4a']);
+    this.load.audio('bgm_sss', ['bgm_sss.ogg', 'bgm_sss.m4a']);
+    
+    // ▼▼▼ [에러 추적] 만약 이미지가 안 나오면 어떤 주소를 찾고 있는지 알려줌 ▼▼▼
+    this.load.on('loaderror', function(file) {
+        alert("이미지 로드 실패!\n파일명: " + file.key + "\n시도한 주소: " + file.src);
+    });
             
-            this.load.image('bg_netflix', 'assets/bg_netflix.png');
-            this.load.image('bg_tenis', 'assets/bg_tenis.png');
-            this.load.image('bg_travel', 'assets/bg_travel.png');
-
-            this.load.image('scene_study', 'assets/scene_study.png');      
-            this.load.image('scene_burning', 'assets/scene_burning.png'); 
-            this.load.image('bg_sleep', 'assets/bg_sleep.png');
-            this.load.image('bg_empty_room', 'assets/bg_empty_room.png'); 
-            this.load.image('char_hoodie_front', 'assets/char_hoodie_front.png'); 
-            this.load.image('char_suit_front', 'assets/char_suit_front.png'); 
-            this.load.image('item_mouse_basic.png', 'assets/item_mouse_basic.png'); 
-         // ★★★ [수정] 페이즈 1 (후드) 애니메이션 프레임 (4장) ★★★
-    this.load.image('char_work', 'assets/char_work.png');       // 기본
-    this.load.image('char_work_2', 'assets/char_work_2.png');   // 프레임 2
-    this.load.image('char_work_3', 'assets/char_work_3.png');   // 프레임 3
-    this.load.image('char_work_4', 'assets/char_work_4.png');   // 프레임 4
-
-    // ★★★ [수정] 페이즈 2 (정장) 애니메이션 프레임 (4장) ★★★
-    this.load.image('char_suit_work', 'assets/char_suit_work.png');     // 기본
-    this.load.image('char_suit_work_2', 'assets/char_suit_work_2.png'); // 프레임 2
-    this.load.image('char_suit_work_3', 'assets/char_suit_work_3.png'); // 프레임 3
-    this.load.image('char_suit_work_4', 'assets/char_suit_work_4.png'); // 프레임 4
-
-
-            this.load.audio('bgm', 'assets/bgm.mp3');
-            // [사운드 로드] wav 파일 로드
-    this.load.audio('bgm_intro', ['assets/bgm_intro.ogg', 'assets/bgm_intro.m4a']);
-    this.load.audio('bgm_p1', ['assets/bgm_p1.ogg', 'assets/bgm_p1.m4a']);
-    this.load.audio('bgm_p2', ['assets/bgm_p2.ogg', 'assets/bgm_p2.m4a']);
-    this.load.audio('sfx_btn', 'assets/sfx_btn.wav');
-    this.load.audio('sfx_ending', 'assets/sfx_ending.ogg','assets/sfx_ending.m4a');
-            loadGameData();
-        }
-
+    loadGameData();
+}
        // [3] create 함수 수정 (기존 create 덮어쓰기)
 // [기존 create 함수를 이걸로 통째로 교체하세요]
 function create() {
     sceneContext = this;
     
     // 1. 사운드 및 버튼 설정
-    soundIntro = this.sound.add('bgm_intro', { loop: false, volume: 0.6 });
     soundP1 = this.sound.add('bgm_p1', { loop: true, volume: 0.5 });
     soundP2 = this.sound.add('bgm_p2', { loop: true, volume: 0.5 });
+    // ★ [추가] AI BGM 설정 (반복 재생 loop: true)
+    soundAI = this.sound.add('bgm_ai', { loop: true, volume: 0.6 });
     soundClick = this.sound.add('sfx_btn', { volume: 0.8 });
     soundEnding = this.sound.add('sfx_ending', { loop: false, volume: 1.0 });
+    soundSSS = this.sound.add('bgm_sss', { loop: true, volume: 0.6 });
+    
+    
 
     document.querySelectorAll('button').forEach(btn => {
         btn.addEventListener('click', () => { if(isSoundOn && soundClick) soundClick.play(); });
@@ -1949,19 +3004,33 @@ function create() {
     const p1_frames = ['char_work', 'char_work_2', 'char_work_3', 'char_work_4'];
     const p2_frames = ['char_suit_work', 'char_suit_work_2', 'char_suit_work_3', 'char_suit_work_4'];
 
-    // 랜덤하게 자세를 바꾸는 함수
+// [create 함수 내부] 랜덤 행동 로직 교체
     const changePoseRandomly = () => {
-        // 1. 랜덤 이미지 선택 (0 ~ 3번 중 하나)
         const randIdx = Math.floor(Math.random() * 4);
         
-        // 2. 텍스처(이미지) 교체
-        if(charWorkSprite) charWorkSprite.setTexture(p1_frames[randIdx]);
-        if(charSuitWorkSprite) charSuitWorkSprite.setTexture(p2_frames[randIdx]);
+        // 1. 현재 화면이 메인 화면인지 체크 (팝업이나 컷신 중엔 켜면 안 됨)
+        // (UI 레이어가 보일 때만 강제로 켭니다)
+        const isMainScreen = player.isPhase2 
+            ? (document.getElementById('phase2-ui-layer').style.display !== 'none')
+            : (document.getElementById('ui-layer').style.display !== 'none');
 
-        // 3. 다음 행동 예약 (2초 ~ 5초 사이 랜덤한 시간에 다시 실행)
-        // 2000(2초) + 0~3000(0~3초) = 2~5초 간격
-        let nextDelay = 3000 + Math.floor(Math.random() * 4000);
+        // 2. 텍스처 교체 및 강제 노출
+        if(charWorkSprite) {
+            charWorkSprite.setTexture(p1_frames[randIdx]);
+            if (!player.isPhase2 && isMainScreen) charWorkSprite.setVisible(true);
+        }
         
+        if(charSuitWorkSprite) {
+            charSuitWorkSprite.setTexture(p2_frames[randIdx]);
+            // ★ Phase 2이고 메인화면이면 무조건 보이기
+            if (player.isPhase2 && isMainScreen) {
+                charSuitWorkSprite.setVisible(true);
+                charSuitWorkSprite.setDepth(5); // 깊이도 재확인
+            }
+        }
+
+        // 3. 다음 행동 예약
+        let nextDelay = 3000 + Math.floor(Math.random() * 4000);
         sceneContext.time.addEvent({
             delay: nextDelay,
             callback: changePoseRandomly,
@@ -2017,6 +3086,7 @@ function create() {
         soundIntro.play();
         currentBgm = soundIntro;
     }
+
 }
 
 // [기존 setBgByTier 함수를 이걸로 교체하세요]
@@ -2049,8 +3119,36 @@ function setBgByTier(tier) {
 
         let pendingOffer = null;
 
-// [수정된 applyJob 함수: 모든 지원자 면접 진행]
+// [가이드 #5 준수] 앱이 백그라운드로 가면 소리 끄기, 돌아오면 켜기
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // 앱을 나갔을 때: 무조건 음소거
+            if(sceneContext && sceneContext.sound) sceneContext.sound.mute = true;
+        } else {
+            // 앱으로 돌아왔을 때: 유저 설정(isSoundOn)에 따라 복구
+            if(sceneContext && sceneContext.sound) sceneContext.sound.mute = !isSoundOn;
+            
+            // 혹시 BGM이 멈춰있다면 다시 재생 (안전장치)
+            if(isSoundOn && currentBgm && !currentBgm.isPlaying) {
+                currentBgm.play();
+            }
+        }
+    });
+
+// [수정] 입사 지원 함수 (하향 이직 방지 로직 추가)
 window.applyJob = function(name, req, tier) {
+    // 0. [신규] 하향 지원 체크 (페이즈 2 경력직만 해당)
+    if (player.isPhase2) {
+        const tierOrder = ['Agency', 'TopTier', 'Unicorn', 'Global', 'Space'];
+        const myIdx = tierOrder.indexOf(player.tier);
+        const targetIdx = tierOrder.indexOf(tier);
+
+        // 내 티어보다 낮은 곳 지원 시 (예: Global -> Unicorn)
+        if (targetIdx < myIdx) {
+            return alert(`[지원 불가] ✋\n경력 관리를 위해 하향 이직은 불가능합니다.\n(현재: ${player.tier} / 대상: ${tier})`);
+        }
+    }
+
     // 1. 서류(점수) 컷
     if(player.bestPortfolioScore < req) { 
         return alert(`[지원 불가] 📄\n포트폴리오 점수가 부족합니다.\n(나의 점수: ${player.bestPortfolioScore} / 커트라인: ${req})`); 
@@ -2062,10 +3160,9 @@ window.applyJob = function(name, req, tier) {
         return alert(`[지원 불가] 경력(직급)이 부족합니다.\n현재 직급보다 더 높은 단계의 회사입니다.`);
     }
 
-    // 3. 서류 합격 -> 면접장 이동 (페이즈 구분 없음!)
+    // 3. 서류 합격 -> 면접장 이동
     closePopup(); // 채용공고 닫기
     
-    // 문구만 살짝 다르게 (신입 vs 경력)
     let msg = player.isPhase2 
         ? `[서류 통과] 🎉\n"${name}"에서 이직 면접을 제안했습니다.`
         : `[서류 합격] 🎉\n"${name}"에서 면접 제안이 왔습니다!`;
@@ -2078,23 +3175,33 @@ window.applyJob = function(name, req, tier) {
     }, 300);
 };
 
-        window.acceptOffer = function() {
-            closePopup();
-            
-            const isFirstTime = !player.isPhase2;
-            
-            player.tier = pendingOffer.newTier;
-            player.rank = 0; 
-            player.hp = 100;
-            player.performance = 0;
-            updateSalary();
+// [수정] 입사 수락 (전면 광고 제거 -> 즉시 이직)
+window.acceptOffer = function() {
+    // 1. 팝업 닫기
+    closePopup();
+    
+    // 2. [변경] 광고 없이 바로 이직 처리 시작
+    console.log("🚀 이직 수락 (전면 광고 생략)");
 
-            if(isFirstTime) {
-                playEndingSequence(pendingOffer.name, pendingOffer.score);
-            } else {
-                playTransferSequence(pendingOffer.name);
-            }
-        };
+    // ▼▼▼ 기존 이직 로직 (그대로 유지) ▼▼▼
+    const isFirstTime = !player.isPhase2;
+    
+    // 데이터 갱신
+    player.tier = pendingOffer.newTier;
+    player.rank = 0; 
+    player.hp = 100; // 이직하면 체력 풀충전 (새 출발)
+    player.performance = 0;
+    updateSalary(); // 연봉 재계산
+
+    // 연출 재생
+    if(isFirstTime) {
+        // 1페이즈 -> 2페이즈 (엔딩 연출 후 전환)
+        playEndingSequence(pendingOffer.name, pendingOffer.score);
+    } else {
+        // 2페이즈 -> 2페이즈 (회사 이동 연출)
+        playTransferSequence(pendingOffer.name);
+    }
+};
 
         function playTransferSequence(companyName) {
             player.isBusy = true;
@@ -2134,6 +3241,7 @@ window.applyJob = function(name, req, tier) {
         }
 
         function playEndingSequence(companyName, requiredScore) {
+            player.isBusy = true;
     // 1. 사운드 처리
     if(soundP1 && soundP1.isPlaying) {
         soundP1.stop();
@@ -2217,56 +3325,101 @@ window.applyJob = function(name, req, tier) {
         }
     });
 }
-        function showSuccessPopup(companyName) {
-            document.getElementById('success-company').innerText = companyName;
-            document.getElementById('success-score').innerText = calculateTotalScore().toLocaleString();
-            const popup = document.getElementById('success-popup');
-            popup.style.display = 'flex'; 
-            player.isBusy = false;
-        }
+function showSuccessPopup(companyName) {
+    // 1. 엔딩 시점 점수 서버 제출 (기존 로직 유지)
+    submitTossScore();
+
+    // 2. 회사 이름만 업데이트
+    document.getElementById('success-company').innerText = companyName;
+    
+    // (점수 표시 코드 삭제됨)
+
+    // 3. 팝업 열기
+    const popup = document.getElementById('success-popup');
+    popup.style.display = 'flex'; 
+    player.isBusy = false;
+}
         
-// [수정] 프로젝트 할당 (AI 라이벌 'Alpha-D' 난입 시스템 추가)
+// [수정] 프로젝트 할당 (SSS급 엔딩 프로젝트 추가)
 function assignProject() {
-    const tiers = ['S', 'A', 'B'];
-    const tier = tiers[Math.floor(Math.random()*tiers.length)]; 
-    const pool = projectPools[player.tier] || projectPools['Agency'];
-    const theme = pool[Math.floor(Math.random()*pool.length)];
-    
-    // 마감 기한 설정
+    let tier = 'B';
+    let theme = "";
+    let isMasterpiece = false;
+    let isSingularity = false; // SSS급 플래그
+
+    // -----------------------------------------------------------
+    // [1순위] SSS급: 박물관 10개 수집 완료 시 강제 발동
+    // -----------------------------------------------------------
+    if (player.museum && player.museum.length >= 10 && !player.isEndingSeen) {
+        tier = 'SSS';
+        theme = "Project: Singularity (특이점)";
+        isSingularity = true;
+    }
+    // [2순위] SS급: Space 티어 + 박물관 미완성 + 15% 확률
+    else if (player.tier === 'Space' && (!player.museum || player.museum.length < 10) && Math.random() < 0.15) {
+        tier = 'SS';
+        isMasterpiece = true;
+        
+        const collectedNames = player.museum ? player.museum.map(m => m.name) : [];
+        const available = masterpiecePool.filter(m => !collectedNames.includes(m.name));
+        
+        if (available.length > 0) {
+            const pick = available[Math.floor(Math.random() * available.length)];
+            theme = pick.name; 
+        } else {
+            tier = 'S'; isMasterpiece = false;
+        }
+    } 
+    // [3순위] 일반 프로젝트
+    else {
+        const tiers = ['S', 'A', 'B'];
+        tier = tiers[Math.floor(Math.random() * tiers.length)];
+        const pool = projectPools[player.tier] || projectPools['Agency'];
+        theme = pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    // -----------------------------------------------------------
+    // 2. 마감 기한 설정
+    // -----------------------------------------------------------
     let dead = 0;
-    if (tier === 'S') dead = Math.floor(Math.random() * 3) + 8;
-    else if (tier === 'A') dead = Math.floor(Math.random() * 2) + 8;
-    else dead = Math.floor(Math.random() * 2) + 6;
+    if (tier === 'SSS') {
+        dead = 15; // SSS급: 15주 (최장 기간)
+    } else if (tier === 'SS') {
+        dead = 12; // SS급: 12주
+    } else if (tier === 'S' || tier === 'A') {
+        dead = Math.floor(Math.random() * 2) + 8; // 8~9주
+    } else {
+        dead = Math.floor(Math.random() * 2) + 6; // 6~7주
+    }
     
-    // 버프 타입 판별
+    // 3. 버프 타입 (SSS급은 모든 버프 복합)
     let type = 'fame'; 
-    if (theme.includes("쇼핑") || theme.includes("광고") || theme.includes("금융")) type = 'wealth';
-    else if (theme.includes("앱") || theme.includes("시스템") || theme.includes("게임")) type = 'speed';
+    if (isSingularity) type = 'all'; 
+    else if (theme.includes("쇼핑") || theme.includes("금융")) type = 'wealth';
+    else if (theme.includes("앱") || theme.includes("게임")) type = 'speed';
     
-    // ★★★ [신규] 라이벌 등장 체크 (Global 이상, 20% 확률) ★★★
+    // 4. 라이벌 등장 (SSS급, SS급일 때는 라이벌 안 나옴 - 독무대)
     let isRivalMatch = false;
     let rivalScoreTarget = 0;
     let rivalName = "";
 
-    if ((player.tier === 'Global' || player.tier === 'Space') && Math.random() < 0.2) {
+    if (!isSingularity && !isMasterpiece && (player.tier === 'Global' || player.tier === 'Space') && Math.random() < 0.2) {
         isRivalMatch = true;
         rivalName = "🤖 Alpha-D";
-        
-        // 라이벌 목표 점수: 현재 내 최고 기록보다 조금 높게 설정 (긴장감)
-        // 최소 1000점 ~ 내 최고점수의 1.1배 사이
-        let base = Math.max(1000, player.bestPortfolioScore);
-        rivalScoreTarget = Math.floor(base * (0.9 + Math.random() * 0.3)); 
-        
-        alert(`🚨 [긴급] 경쟁사 AI '${rivalName}'가 입찰에 참여했습니다!\n\n목표: AI의 점수(${rivalScoreTarget}점)를 넘겨야만 승인됩니다.\n(패배 시 보상 없음)`);
+        let tierMult = player.tier === 'Space' ? 50 : 20;
+        let baseScore = (tier === 'S' ? 500 : (tier === 'A' ? 300 : 100));
+        rivalScoreTarget = Math.floor(baseScore * tierMult * (1.1 + Math.random() * 0.3));
+        openRivalWarningPopup(rivalScoreTarget); 
     }
 
+    // 5. 데이터 저장
     player.currentProject = {
-        name: `${theme}`,
+        name: theme,
         tier: tier,
         companyTier: player.tier, 
         originalTier: tier,
         progress: 0,
-        deadline: dead, 
+        deadline: dead,
         currentWeek: 0, 
         isExtended: false,
         meetingDone: false, 
@@ -2274,23 +3427,30 @@ function assignProject() {
         costMult: 1.0,
         strategyName: "미정",
         buffType: type,
-        // 라이벌 정보 저장
         isRival: isRivalMatch,
         rivalName: rivalName,
-        rivalTarget: rivalScoreTarget
+        rivalTarget: rivalScoreTarget,
+        isMasterpiece: isMasterpiece,
+        isSingularity: isSingularity // ★ SSS급 식별자
     };
     
     let logMsg = `[${player.tier}] 신규 ${tier}급 업무 할당! (마감 D-${dead})`;
-    if(isRivalMatch) logMsg = `🔥 VS Alpha-D 경쟁 프로젝트 시작! (목표: ${rivalScoreTarget}점)`;
+    if (isSingularity) logMsg = `🌌 [EVENT] 최후의 프로젝트 "특이점" 시작!`;
+    else if (isMasterpiece) logMsg = `✨ [전설] 걸작 의뢰 도착: "${theme}"`;
+    else if (isRivalMatch) logMsg = `🔥 VS Alpha-D 경쟁 프로젝트 시작!`;
     
     showP2Log(logMsg);
+    
+   // ▼▼▼ [수정] 단순 알림(alert) 대신 컷신 함수 호출 ▼▼▼
+    if(isSingularity) {
+        showSSSIntro(); // 멋진 컷신 발동!
+    }
 }
-
-  // [Ver 82.1 Fix] 에이전시 20 고정 + 상위 티어 소모량 완화
+// [수정] 페이즈 2 업무 수행 (위기 상황 발동 추가)
 window.doP2Work = function() {
     if (!player.currentProject) return;
     
-    // 안전장치
+    // 1. 미팅 체크
     if (typeof player.currentProject.meetingDone === 'undefined') {
         player.currentProject.meetingDone = false;
         player.currentProject.progMult = 1.0;
@@ -2307,14 +3467,21 @@ window.doP2Work = function() {
         return; 
     }
 
-    // [수정] 체력 비용 밸런스 조정
-    // 에이전시는 20으로 유지하되, 상위 구간 상승폭을 줄임 (2씩 증가)
+    // 2. 비용 계산
     let baseCost = 20; 
     let mult = player.currentProject.costMult || 1.0;
     let finalCost = Math.floor(baseCost * mult);
 
     if(player.hp < finalCost) return alert(`체력이 부족합니다. (필요 ${finalCost})`);
-    
+
+    // ▼▼▼ [핵심 추가] 5% 확률로 '응답 없음' 위기 발동! ▼▼▼
+    if (Math.random() < 0.07) { 
+        startCrisisGame(); // 위기 발생 (경고창 -> 게임)
+        return; // 여기서 중단 (성공 시 resumeGameWork 호출됨)
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // 3. 정상 업무 진행
     realWork(player.currentProject.progMult, finalCost, player.currentProject.strategyName);
 }
 
@@ -2340,58 +3507,49 @@ window.confirmMeeting = function(strategy) {
     doP2Work(); // 설정 끝났으니 바로 업무 1회 실행
 }
 
-// [Ver 68.5 Fix] 진행도 제한 해제 (능력껏 하세요)
+// [수정] 업무 수행 (SSS급 난이도 추가)
 function realWork(progMult, finalCost, strategyName) {
     playScene(bgSprite.texture.key, msgs.work, () => {
         player.hp -= finalCost;
         
-      // [수정된 난이도 밸런스]
-// 기존보다 전반적으로 상향하여 성취감을 높임
-const tierCoef = { 
-    Agency: 3,      
-    TopTier: 5.5,     
-    Unicorn: 10,    
-    Global: 15,     
-    Space: 25      
-};
-let baseDiff = tierCoef[player.tier] || 3;
-
-// ★ [핵심 수정] 직급 패널티 하향 (기존 0.35 -> 0.25)
-        // 사원(1.0) -> 대리(1.25) -> 팀장(1.5) -> 이사(1.75)
-        // 기존에는 팀장이면 1.7배였지만, 이제는 1.5배로 줄어듭니다.
+        const tierCoef = { Agency: 3, TopTier: 5.5, Unicorn: 10, Global: 15, Space: 25 };
+        let baseDiff = tierCoef[player.tier] || 3;
         let rankDiffMult = 1 + (player.rank * 0.25);
-
-let difficulty = Math.floor(baseDiff * rankDiffMult);
+        let difficulty = Math.floor(baseDiff * rankDiffMult);
 
         let base = 30; 
         let statBonus = Math.floor(player.designStat * 0.06); 
         let itemBonus = player.currentPower || 0;
         let totalPower = base + statBonus + itemBonus;
-        // [★ 추가 1] 체력 감소 플로팅 (빨간색)
-   // ★ [수정] 체력 감소 위치 상향: 350 -> 280 (얼굴 높이)
+
         showFloatingText(180, 280, `-${finalCost} HP`, '#FF5F5F');
 
-        // 1. 기본 진행도 계산
         let prog = Math.max(1, Math.floor(totalPower / difficulty));
-        if(player.currentProject.tier === 'S') prog = Math.ceil(prog * 0.6);
-        else if(player.currentProject.tier === 'A') prog = Math.ceil(prog * 0.7);
 
-        // 3. 배율 적용
+        // ▼▼▼ [핵심] 등급별 난이도 패널티 ▼▼▼
+        if (player.currentProject.tier === 'SSS') {
+            prog = Math.ceil(prog * 0.2); // ★ SSS급: 20% 속도 (극악)
+        } 
+        else if (player.currentProject.tier === 'SS') {
+            prog = Math.ceil(prog * 0.4); // SS급: 40%
+        } 
+        else if (player.currentProject.tier === 'S') {
+            prog = Math.ceil(prog * 0.6); 
+        } 
+        else if (player.currentProject.tier === 'A') {
+            prog = Math.ceil(prog * 0.7); 
+        }
+
         prog = Math.ceil(prog * progMult);
 
-        // 4. 버프 적용
         if (typeof getHofBuffs === 'function') {
             let speedBuff = getHofBuffs().speed; 
             if (speedBuff > 0) prog = Math.ceil(prog * (1 + speedBuff/100));
         }
         
-        // 최소 1% 보장
         prog = Math.max(1, prog);
-
         player.currentProject.progress += prog;
         
-        // [★ 추가 2] 진행도 상승 플로팅 (파란색)
-        // 위치: 화면 중앙 상단
         showFloatingText(180, 240, `+${prog}%`, '#3182F6');
 
         if(player.currentProject.progress >= 100) {
@@ -2400,93 +3558,108 @@ let difficulty = Math.floor(baseDiff * rankDiffMult);
             showP2Log(`[${strategyName}] 진행도 +${prog}%...`); 
             addTime(true); 
         }
-    });
+    }, true);
 }
-// [수정] 프로젝트 완료 (AI 라이벌 + 신입 가산점 + S급 대박/쪽박 연출 복구)
+// [수정] 프로젝트 완료 (SSS급 진 엔딩 로직 포함)
 function completeProject() {
     let tier = player.currentProject.tier;
     
-    // 1. 점수(Score) 기초 계산
+    // ============================================================
+    // 🌌 [진 엔딩] SSS급 특이점 프로젝트 완료 시
+    // ============================================================
+    if (player.currentProject.isSingularity) {
+        // 1. 엔딩 플래그 세우기
+        player.isEndingSeen = true; 
+        player.rank = 4; // 0:사원, 1:대리, 2:팀장, 3:이사, 4:전설(Legend)
+        
+        // 2. 보상: 막대한 부와 명예
+        player.money += 9999999999; // 돈 걱정 끝
+        player.performance = 100;   // 성과 MAX
+        
+        // 3. AI 영입 (데이터에 기록)
+        player.hasAiAssistant = true; 
+
+        // 4. 엔딩 팝업 출력
+        let statList = [
+            { label: "최종 점수", val: "측정 불가 (∞)", color: "#FFD700" },
+            { label: "칭호 획득", val: "The Legend", color: "#FFD700" },
+            { label: "특전", val: "🤖 Alpha-D 영입", color: "#3182F6" }
+        ];
+
+        openResultPopup('success', 
+            "🌌 특이점(Singularity) 도달", 
+            "🤖 Alpha-D:\n\"당신의 승리입니다. 데이터로 설명할 수 없는\n인간의 '영혼'을 보았습니다.\n\n이제부터 당신을 '마스터'로 모시겠습니다.\"", 
+            statList
+        );
+        
+        // 5. 엔딩 사운드 재생
+        if(isSoundOn && soundEnding) soundEnding.play();
+
+        // 6. 프로젝트 초기화
+        player.currentProject = null;
+        
+        // 7. 저장 및 UI 갱신
+        saveGameData();
+        updateUI();
+        
+        // 8. 추가 안내 (팝업 닫은 후를 대비해 로그 남김)
+        setTimeout(() => {
+            alert("🏆 [THE LEGEND] 등극을 축하합니다!\n\n이제부터는 [무한 모드]가 시작됩니다.\nAI 비서의 도움을 받아 최고 점수에 도전하세요!");
+        }, 1000);
+
+        return; // ★ 여기서 함수 종료 (아래 일반 로직 실행 X)
+    }
+
+    // ============================================================
+    // 아래는 기존 일반/SS급/라이벌 로직 (그대로 유지)
+    // ============================================================
+    
     let tierMult = 1;
     if (player.tier === 'Space') tierMult = 50;
     else if (player.tier === 'Global') tierMult = 20;
     else if (player.tier === 'Unicorn') tierMult = 8; 
     else if (player.tier === 'TopTier') tierMult = 3; 
 
-    let baseScore = (tier === 'S' ? 500 : (tier === 'A' ? 300 : 100));
+    let baseScore = (tier === 'SS' ? 1500 : (tier === 'S' ? 500 : (tier === 'A' ? 300 : 100)));
     let rawScore = baseScore * tierMult;
 
-    // ★★★ [복구] 대박(Viral) 확률 및 랜덤 변수 계산 ★★★
-    // 기본 랜덤: 0.8 ~ 1.2
     let randomFactor = 0.8 + (Math.random() * 0.4); 
     let isViral = false;
+    if (tier === 'S' && Math.random() < 0.1) { isViral = true; randomFactor += 0.3; }
 
-    // S급일 때 10% 확률로 '대박' 터짐 (배율 대폭 상승)
-    if (tier === 'S') {
-        if (Math.random() < 0.1) { 
-            isViral = true; 
-            randomFactor += 0.3; // 1.1 ~ 1.5배까지 뻥튀기
-        }
-    }
-
-    // 최종 점수 계산
     let rankBonus = 1 + (player.rank * 0.05);
     let finalScore = Math.floor(rawScore * randomFactor * rankBonus);
 
-    // 2. [라이벌전] 승패 판정
-    let isWin = false;
     if (player.currentProject.isRival) {
         let target = player.currentProject.rivalTarget;
-        
         if (finalScore >= target) {
-            // 승리
-            isWin = true;
-            let bonusMoney = 100000000; // 1억
+            let bonusMoney = 100000000; 
             player.money += bonusMoney;
             player.performance += 20; 
-            alert(`🏆 [승리] AI를 압도했습니다!\n(내 점수: ${finalScore} vs AI: ${target})\n\n보상: 성과급 1억 원 + 인사고과 대폭 상승!`);
         } else {
-            // 패배
             player.hp = Math.floor(player.hp / 2);
             player.performance = Math.max(0, player.performance - 10);
-            alert(`💀 [패배] AI에게 밀렸습니다...\n(내 점수: ${finalScore} vs AI: ${target})\n\n프로젝트가 회수됩니다. (보상 0원, 멘탈 붕괴)`);
-            
+            let statList = [
+                { label: "내 점수", val: `${finalScore.toLocaleString()}점`, color: "#B0B8C1" },
+                { label: "AI 점수", val: `${target.toLocaleString()}점`, color: "#FF5F5F" },
+                { label: "결과", val: "패배 (회수됨)", color: "#FF5F5F" }
+            ];
+            openResultPopup('fail', "🤖 COMPETITION LOST", "점수 미달로 프로젝트가 회수됩니다.", statList);
             player.currentProject = null; 
-            assignProject(); 
-            addTime(true);
             return; 
         }
     }
 
-    // 3. 시즌 최고 점수 갱신
     if (!player.seasonBestScore) player.seasonBestScore = 0;
     if (finalScore > player.seasonBestScore) player.seasonBestScore = finalScore;
 
-    // 4. 승진 점수(Performance) 계산 (신입/경력 분기)
-    let basePromo = tier === 'S' ? 20 : (tier === 'A' ? 10 : 5);
-    let rankMult = 1.0;
-
-    if (player.rank === 0) {
-        // [신입]
-        if (player.currentProject.isExtended) rankMult = 1.0; 
-        else {
-            if (player.tier === 'Global' || player.tier === 'Space') rankMult = 1.0; 
-            else if (player.tier === 'Unicorn') rankMult = 1.1; 
-            else rankMult = 1.2; 
-        }
-    } else {
-        // [경력]
-        if (player.rank === 1) rankMult = 0.75;
-        else if (player.rank === 2) rankMult = 0.5;
-        else if (player.rank === 3) rankMult = 0.25;
-    }
-    
-    let finalPromo = Math.max(1, Math.round(basePromo * rankMult));
+    let basePromo = tier === 'SS' ? 50 : (tier === 'S' ? 20 : (tier === 'A' ? 10 : 5));
+    let finalPromo = Math.floor(basePromo * (1 + (player.rank * 0.1)));
     player.performance += finalPromo;
     
-    // 5. 기록 저장 (대박이면 이름 앞에 불꽃 추가)
     let historyName = player.currentProject.name;
     if (isViral) historyName = "🔥 " + historyName;
+    if (tier === 'SS') historyName = "🏛️ " + historyName;
 
     player.history.push({ 
         name: historyName, 
@@ -2495,117 +3668,152 @@ function completeProject() {
         companyTier: player.currentProject.companyTier || player.tier,
         buffType: player.currentProject.buffType || 'fame'
     });
-    
     if(finalScore > player.bestPortfolioScore) player.bestPortfolioScore = finalScore;
 
-    // 6. 결과 메시지 구성
-    let msg = `✅ 결재 승인! [${tier}급] 완료!\n(점수: ${finalScore.toLocaleString()} / 고과 +${finalPromo})`;
-    
-    // ★★★ [복구] S급 대박/쪽박 메시지 로직 ★★★
-    if (isViral) {
-        msg += `\n🔥 대박 터짐! 시장 반응 폭발! 🔥`;
-    } 
-    else if (tier === 'S' && randomFactor < 1.0) {
-        msg += `\n📉 시장 반응이 미지근합니다...`;
+    if (player.currentProject.isMasterpiece) {
+        if (!player.museum) player.museum = [];
+        const exists = player.museum.some(m => m.name === player.currentProject.name);
+        if (!exists) {
+            player.museum.push({
+                name: player.currentProject.name,
+                desc: (typeof masterpiecePool !== 'undefined') 
+                      ? (masterpiecePool.find(m => m.name === player.currentProject.name)?.desc || "전설의 유물") 
+                      : "전설의 유물",
+                score: finalScore,
+                date: `${player.totalWeeks}주차`
+            });
+        }
+
+        let statList = [
+            { label: "역사적 가치", val: `${finalScore.toLocaleString()}점`, color: "#FFD700" },
+            { label: "명성", val: `+${finalPromo} (Ultra)`, color: "#FFD700" },
+            { label: "보상", val: "박물관 등록 완료", color: "#4CD964" }
+        ];
+        openResultPopup('success', `🏛️ 걸작(Masterpiece) 탄생!`, `위대한 업적을 달성했습니다.\n"${player.currentProject.name}"이(가) 박물관에 전시됩니다.`, statList);
+        if(isSoundOn && soundEnding) soundEnding.play();
+
+    } else {
+        let msg = `(점수: ${finalScore.toLocaleString()} / 고과 +${finalPromo})`;
+        if (isViral) msg += `\n🔥 대박 터짐! 시장 반응 폭발!`;
+        else if (player.currentProject.isRival) msg += `\n🤖 AI와의 경쟁에서 승리했습니다!`;
+
+        let statList = [
+            { label: "최종 점수", val: `${finalScore.toLocaleString()}점`, color: "#FFD700" },
+            { label: "인사 고과", val: `+${finalPromo}` }
+        ];
+        if (player.currentProject.isRival) statList.push({ label: "승리 보너스", val: "+1억 원", color: "#3182F6" });
+
+        openResultPopup('success', `[${tier}급] 결재 승인!`, msg, statList);
     }
 
-    // 라이벌 승리 메시지 덮어쓰기
-    if (player.currentProject.isRival && isWin) {
-        msg = `🏆 AI 격파! 점수: ${finalScore.toLocaleString()}점\n(승진심사 +${finalPromo + 20})`; 
-    }
-
-    // 신입 가산점 안내 멘트
-    if (player.rank === 0) {
-        if (player.currentProject.isExtended) msg += `\n※ 반려 이력으로 신입 가산점 제외됨`;
-        else if (rankMult > 1.0) msg += `\n✨ 신입 가산점 ${Math.round((rankMult-1)*100)}% 적용!`;
-    }
-
-    alert(msg);
-    
-    // 종료 처리
     player.currentProject = null; 
-    assignProject(); 
-    addTime(true);
 }
 
- // [Ver 69.0 Fix] C급 삼진 아웃 (무한 루프 방지 및 강제 종료)
+// [수정] 마감 실패 처리 (SSS급 전용 패배 연출 추가)
 function rejectProject() {
+    // ============================================================
+    // 1. [SSS급] 특이점 프로젝트 실패 시 (Game Over급 연출)
+    // ============================================================
+    if (player.currentProject.isSingularity) {
+        // 1. 패널티: 멘탈 1로 만듦 (빈사 상태) + 성과 대폭 하락
+        player.hp = 1; 
+        player.performance = Math.max(0, player.performance - 50);
+
+        // 2. 실패 리포트
+        let statList = [
+            { label: "검증 결과", val: "불합격 (FAIL)", color: "#FF5F5F" },
+            { label: "멘탈 상태", val: "붕괴 (HP 1)", color: "#FF5F5F" },
+            { label: "패널티", val: "프로젝트 초기화", color: "#B0B8C1" }
+        ];
+
+        // 3. 팝업 호출 (Alpha-D의 차가운 대사)
+        openResultPopup('fail', 
+            "🤖 SYSTEM ERROR", 
+            "Alpha-D:\n\"실망스럽군요. 당신의 데이터에서는\n어떠한 가능성도 발견되지 않았습니다.\n\n(기회를 다시 얻으려면 회복하십시오.)\"", 
+            statList
+        );
+
+        // 4. 프로젝트 삭제 (팝업 닫으면 assignProject가 다시 SSS급을 줌 -> 재도전)
+        player.currentProject = null;
+        
+        updateUI();
+        return; // ★ 함수 종료
+    }
+
+    // ============================================================
+    // 2. [라이벌] 경쟁 패배 시 (기존 로직)
+    // ============================================================
+    if (player.currentProject.isRival) {
+        player.hp = Math.floor(player.hp / 2); 
+        let penalty = 20;
+        player.performance = Math.max(0, player.performance - penalty);
+
+        let statList = [
+            { label: "경쟁 결과", val: "패배 (Time Over)", color: "#FF5F5F" },
+            { label: "인사 고과", val: `-${penalty}`, color: "#FF5F5F" },
+            { label: "멘탈", val: "손상됨 (-50%)", color: "#FF5F5F" }
+        ];
+
+        openResultPopup('fail', "🤖 COMPETITION LOST", "AI가 먼저 결과물을 제출했습니다.\n당신의 프로젝트는 즉시 폐기됩니다.", statList);
+        player.currentProject = null;
+        updateUI();
+        return; 
+    }
+
+    // ============================================================
+    // 3. [일반] S/A/B/C급 마감 실패 (기존 강등 로직)
+    // ============================================================
     let curr = player.currentProject.tier;
-    
-    // 1. 멘탈 반토막 (공통)
     player.hp = Math.floor(player.hp / 2); 
 
-    // ----------------------------------------------------
-    // [CASE 1] C급 프로젝트 (구제 or 폐기 심사)
-    // ----------------------------------------------------
+    // [C급 삼진아웃 로직]
     if (curr === 'C') {
-        // 반려 횟수 카운트 (없으면 0으로 시작)
-        if (typeof player.currentProject.rejectCount === 'undefined') {
-            player.currentProject.rejectCount = 0;
-        }
+        if (typeof player.currentProject.rejectCount === 'undefined') player.currentProject.rejectCount = 0;
         player.currentProject.rejectCount++;
 
-        // [삼진 아웃 체크] 3번째 반려라면?
         if (player.currentProject.rejectCount >= 3) {
-            // 프로젝트 폭파 (Reset)
-            let penalty = 15; // 대형 사고 패널티
+            let penalty = 15;
             player.performance = Math.max(0, player.performance - penalty);
-            
-            alert(`⛔ [프로젝트 폐기 처분]\n\n팀장: "더 이상 못 기다려주겠네. 이 프로젝트는 드랍이야."\n(3회 연속 실패로 업무 회수됨 / 성과 -${penalty})`);
-            
-            // 아예 새 프로젝트 받기 (지옥 탈출)
+            alert(`⛔ [프로젝트 폐기 처분]\n(3회 연속 실패로 업무 회수됨 / 성과 -${penalty})`);
             player.currentProject = null;
             assignProject();
             updateUI();
-            return; // 함수 종료
+            return;
         }
 
-        // [아직 기회 있음] 1~2회차 반려
-        player.performance = Math.max(0, player.performance - 1); // 성과 -1 (잔소리)
-        player.currentProject.deadline += 1; // 기한 +1일 (연장)
-        
-        // 다시 처음부터
+        player.performance = Math.max(0, player.performance - 1);
+        player.currentProject.deadline += 1; 
         player.currentProject.progress = 0;
         player.currentProject.currentWeek = 0;
         
-        alert(`⛔ [C급] 업무 실패! (경고 ${player.currentProject.rejectCount}/3)\n(성과 -1, 멘탈 반토막)\n\n"기회를 한번 더 줍니다. 3번 실패하면 프로젝트는 폐기됩니다."\n(새 마감 D-${player.currentProject.deadline})`);
+        alert(`⛔ [C급] 업무 실패! (경고 ${player.currentProject.rejectCount}/3)\n(성과 -1, 멘탈 반토막)\n\n"기회를 한번 더 줍니다. 3번 실패하면 프로젝트는 폐기됩니다."`);
     }
-    
-    // ----------------------------------------------------
-    // [CASE 2] S/A/B급 실패 시 (기존 로직: 강등)
-    // ----------------------------------------------------
+    // [S~B급 강등 로직]
     else {
         let next = curr === 'S' ? 'A' : (curr === 'A' ? 'B' : 'C');
-        
-        // 직급별 패널티
         let penalty = 0;
         if (player.rank > 0) {
             penalty = (player.rank * 2) + 1;
             player.performance = Math.max(0, player.performance - penalty);
         }
 
-        // 강등 처리
         player.currentProject.tier = next;
         player.currentProject.progress = 0;
         player.currentProject.currentWeek = 0;
-        
-        // 강등 시 반려 카운트 초기화 (새 등급에서 다시 시작)
         player.currentProject.rejectCount = 0;
 
-        // 기한 재설정
-        if (next === 'A') {
-            player.currentProject.deadline = Math.floor(Math.random() * 3) + 6; 
-        } else if (next === 'B') {
-            player.currentProject.deadline = Math.floor(Math.random() * 2) + 6;  
-        } else {
-            player.currentProject.deadline = Math.floor(Math.random() * 2) + 6; 
-        }
+        if (next === 'A') player.currentProject.deadline = Math.floor(Math.random() * 3) + 6; 
+        else player.currentProject.deadline = Math.floor(Math.random() * 2) + 6; 
 
         let msg = `⛔ 마감 초과! 등급 하락 [${curr} -> ${next}]\n(멘탈 반토막`;
-        if (penalty > 0) msg += `, 성과 -${penalty})\n[${RANKS[player.rank]}] 직급 책임 징계.`;
-        else msg += `)\n🔰 신입이라 성과 차감 면제.`;
-        
-        alert(msg);
+        if (penalty > 0) msg += `, 성과 -${penalty})`;
+        else msg += `)`;
+
+        let statList = [];
+        if (penalty > 0) statList.push({ label: "인사 고과", val: `-${penalty}`, color: "#FF5F5F" });
+        statList.push({ label: "멘탈 손상", val: "-50%", color: "#FF5F5F" });
+
+        openResultPopup('fail', "마감 실패 (강등)", msg, statList);
     }
     
     updateUI();
@@ -2760,7 +3968,24 @@ function updateUI() {
             document.getElementById('exp-bar').style.width = (player.designStat % 100) + "%";
             document.getElementById('ui-lv').innerText = Math.floor(player.designStat / 100) + 1;
             document.getElementById('pf-bar').style.width = Math.min(player.portfolioProgress, 100) + "%";
-            
+            // ▼▼▼ [수정] 직급 배지 표시 로직 ▼▼▼
+            const rankEl = document.getElementById('p2-rank-badge');
+            if(rankEl) {
+                if (player.isEndingSeen) {
+                    // 엔딩 본 사람은 황금색 'The Legend' 칭호
+                    rankEl.innerText = `👑 The Legend (${player.tier})`;
+                    rankEl.style.backgroundColor = "rgba(255, 215, 0, 0.3)";
+                    rankEl.style.borderColor = "#FFD700";
+                    rankEl.style.color = "#FFD700";
+                } else {
+                    // 일반인은 기존대로
+                    rankEl.innerText = `${RANKS[player.rank]} (${player.tier})`;
+                    // 스타일 원상복구 (혹시 모르니)
+                    rankEl.style.backgroundColor = ""; 
+                    rankEl.style.borderColor = "";
+                    rankEl.style.color = ""; 
+                }
+            }
             // ... (버튼 로직 기존 유지) ...
             const btn = document.getElementById('btn-work');
             if(player.isProjectStarted) {
@@ -2797,98 +4022,159 @@ function updateUI() {
             if(rankEl) {
                 rankEl.innerText = `${RANKS[player.rank]} (${player.tier})`;
             }
-            
+            const musBtn = document.getElementById('btn-museum');
+            if(musBtn) {
+                // Space 티어이거나, 이미 유물을 하나라도 모았다면 보임
+                if (player.tier === 'Space' || (player.museum && player.museum.length > 0)) {
+                    musBtn.style.display = 'block'; // 버튼 보이기
+                } else {
+                    musBtn.style.display = 'none';  // 버튼 숨기기
+                }
+            }
             renderProjectWidget();
         }
     }
 }
-        function renderProjectWidget() {
-            const w = document.getElementById('p2-project-widget');
-            if(!player.currentProject) { w.style.display='none'; return; }
-            w.style.display = 'block';
-            
-            document.getElementById('pw-title').innerText = `${player.currentProject.name} (${player.currentProject.tier}급)`;
-            let left = player.currentProject.deadline - player.currentProject.currentWeek;
-            document.getElementById('pw-day').innerText = left < 0 ? 0 : left;
-            
-            let per = Math.min(100, Math.floor(player.currentProject.progress));
-            document.getElementById('pw-percent').innerText = per + "%";
-            document.getElementById('pw-bar').style.width = per + "%";
-            
-            document.getElementById('pw-stamp').style.opacity = player.currentProject.tier !== player.currentProject.originalTier ? 1 : 0; 
+// [수정] 프로젝트 위젯 (AI 라이벌 모드 시각화 강화)
+function renderProjectWidget() {
+    const w = document.getElementById('p2-project-widget');
+    
+    // 1. 프로젝트 없으면 숨김
+    if(!player.currentProject) { 
+        w.style.display='none'; 
+        w.classList.remove('rival-mode'); // 클래스 초기화
+        return; 
+    }
+    
+    w.style.display = 'block';
+    
+    const proj = player.currentProject;
+    
+    // 2. [핵심] 라이벌 모드인지 체크하여 스타일 적용
+    if (proj.isRival) {
+        w.classList.add('rival-mode');
+        document.querySelector('#p2-project-widget h4').innerText = "🚨 WARNING: AI RIVALRY";
+    } else {
+        w.classList.remove('rival-mode');
+        document.querySelector('#p2-project-widget h4').innerText = "Current Project";
+    }
 
-            // 마감 임박 버튼 표시 로직
-            const extBtn = document.getElementById('pw-extend-btn');
-            if (extBtn) {
-                if (left <= 1 && per < 100 && !player.currentProject.isExtended) {
-                    extBtn.style.display = 'block';
-                    extBtn.style.animation = 'blink 1s infinite alternate'; 
-                } else {
-                    extBtn.style.display = 'none';
-                    extBtn.style.animation = 'none';
-                }
-            }
+    // 3. 기본 정보 표시
+    document.getElementById('pw-title').innerText = `${proj.name} (${proj.tier}급)`;
+    let left = proj.deadline - proj.currentWeek;
+    document.getElementById('pw-day').innerText = left < 0 ? 0 : left;
+    
+    let per = Math.min(100, Math.floor(proj.progress));
+    document.getElementById('pw-percent').innerText = per + "%";
+    document.getElementById('pw-bar').style.width = per + "%";
+    
+    // 4. [신규] 라이벌 목표 점수 표시 (위젯 하단에 추가)
+    // 기존에 있던 스탬프나 버튼 아래에 정보를 띄웁니다.
+    let rivalInfoHtml = "";
+    if (proj.isRival) {
+        rivalInfoHtml = `
+            <div class="rival-target-score">
+                <span>🤖 Alpha-D</span>
+                <span>Target: ${proj.rivalTarget.toLocaleString()}</span>
+            </div>
+        `;
+    }
+    
+    // 위젯 내부 HTML 갱신 (스탬프, 버튼 등 기존 요소 유지하면서 라이벌 정보 추가)
+    // 기존 구조: h4 -> pw-title -> pw-info -> pw-bar-bg -> pw-stamp -> extend-btn
+    // 여기서 pw-bar-bg 바로 아래에 rivalInfo를 끼워넣습니다.
+    
+    const barBg = w.querySelector('.pw-bar-bg');
+    
+    // 이미 추가된 라이벌 정보가 있다면 삭제 (중복 방지)
+    const oldRivalInfo = w.querySelector('.rival-target-score');
+    if(oldRivalInfo) oldRivalInfo.remove();
+
+    if(proj.isRival) {
+        barBg.insertAdjacentHTML('afterend', rivalInfoHtml);
+    }
+
+    document.getElementById('pw-stamp').style.opacity = proj.tier !== proj.originalTier ? 1 : 0; 
+
+    // 마감 임박 버튼 표시 로직 (기존 유지)
+    const extBtn = document.getElementById('pw-extend-btn');
+    if (extBtn) {
+        if (left <= 1 && per < 100 && !proj.isExtended) {
+            extBtn.style.display = 'block';
+            extBtn.style.animation = 'blink 1s infinite alternate'; 
+        } else {
+            extBtn.style.display = 'none';
+            extBtn.style.animation = 'none';
         }
+    }
+}
 
         window.openExtensionPopup = function() {
             openPopup('extension-popup');
         }
 
-        window.doExtendDeadline = function() {
-            closePopup();
-            if (player.currentProject && !player.currentProject.isExtended) {
-                player.currentProject.deadline += 1; 
-                player.currentProject.isExtended = true; 
-                
-                alert("📞 [통화 성공]\n클라이언트: \"딱 한 번만 봐드리는 겁니다. 다음은 없어요.\"\n(마감 기한 +1주 연장됨 / 재사용 불가)");
-                
-                updateUI(); 
-            }
-        }
+// [수정] 마감 연장 실행 (디자인된 팝업 호출)
+window.doExtendDeadline = function() {
+    // 1. 기존 연장 팝업 닫기
+    const extPopup = document.getElementById('extension-popup');
+    if(extPopup) extPopup.style.display = 'none';
+    closePopup(); 
+
+    // 2. 로직 처리
+    if (player.currentProject && !player.currentProject.isExtended) {
+        player.currentProject.deadline += 1; 
+        player.currentProject.isExtended = true; 
+        
+        // ★ [핵심] 기존 alert 대신 새 팝업 열기
+        openPopup('extension-success-popup');
+        
+        // 효과음 (성공음)
+        if(isSoundOn && typeof soundClick !== 'undefined') soundClick.play();
+        
+        updateUI(); 
+    }
+};
 
 /* [수정] 컷신 재생 함수 (알바, 휴식, 공부, 업무 등 공용) */
 /* [수정] 컷신 재생 함수 (업무, 알바, 휴식 등 공용) */
-function playScene(key, msgs, cb) {
+// [수정] 컷신 재생 함수 (음악 유지 기능 적용 완료)
+function playScene(key, msgs, cb, keepBgm = false) {
     player.isBusy = true; 
-    updateAudioState('mute');
     
+    // ▼▼▼ [수정 1] 음악 유지 옵션이 켜져 있으면 끄지 않음
+    if (!keepBgm) {
+        updateAudioState('mute');
+    }
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
     // 1. UI 숨김
     document.getElementById(player.isPhase2 ? 'phase2-ui-layer' : 'ui-layer').style.display = 'none';
     
-    // 2. 배경 설정
+    // 2. 배경 설정 (Phaser)
     let tex = key; 
-    if(!sceneContext.textures.exists(tex)) tex = 'bg_main'; // 안전장치
+    if(!sceneContext.textures.exists(tex)) tex = 'bg_main'; 
     
     sceneImage.setTexture(tex); 
-    fitToScreen(sceneImage); // 이미지를 화면에 꽉 차게 맞춤
+    fitToScreen(sceneImage); 
     
-    // 배경막(오버레이) 켜기 (Depth: 100)
+    // 배경막 켜기
     sceneOverlay.setVisible(true); 
 
-    // 3. 캐릭터 표시 로직 수정
-    // ★ [핵심 1] 'bg_company'가 아니라, 실제 사무실 배경 이름들을 체크해야 함
+    // 3. 캐릭터 표시 로직 (기존 그대로 유지)
     const officeBgs = ['bg_office', 'bg_toptier', 'bg_unicorn', 'bg_global', 'bg_space', 
                        'bg_office_night', 'bg_toptier_night', 'bg_unicorn_night', 'bg_global_night', 'bg_space_night'];
 
-    // 페이즈 2이고, 현재 배경이 사무실 배경 중 하나라면?
     if (player.isPhase2 && officeBgs.includes(key)) {
         if (charSuitWorkSprite) {
             charSuitWorkSprite.setVisible(true);
-            
-            // ★ [핵심 2] 캐릭터를 배경막(100)보다 앞으로 가져옴 (101)
             charSuitWorkSprite.setDepth(101); 
-            
-            // 크기 및 위치 재조정
             adjustCharacterSize(charSuitWorkSprite, sceneContext.scale.width, sceneContext.scale.height);
         }
-        
-        // 나머지 캐릭터는 숨김
         if (charHoodieSprite) charHoodieSprite.setVisible(false);
         if (charSuitSprite) charSuitSprite.setVisible(false);
         if (charWorkSprite) charWorkSprite.setVisible(false);
 
     } else {
-        // 업무가 아닌 다른 컷신(알바, 휴식, 여행 등)에서는 캐릭터 모두 숨김
         if (charHoodieSprite) charHoodieSprite.setVisible(false);
         if (charSuitSprite) charSuitSprite.setVisible(false);
         if (charWorkSprite) charWorkSprite.setVisible(false);
@@ -2910,14 +4196,12 @@ function playScene(key, msgs, cb) {
             clearInterval(iv); 
             
             // 5. 종료 및 복구
-            sceneOverlay.setVisible(false); // 컷신 끄기
+            sceneOverlay.setVisible(false); 
             msgLayer.style.display = 'none'; 
             
-            // 컷신 종료 후 원래 메인 화면 캐릭터 복구
             if(player.isPhase2) {
                 if(charSuitWorkSprite) {
                     charSuitWorkSprite.setVisible(true);
-                    // ★ [핵심 3] 끝나면 다시 원래 깊이(5)로 되돌림 (안전장치)
                     charSuitWorkSprite.setDepth(5); 
                 }
             } else {
@@ -2927,13 +4211,17 @@ function playScene(key, msgs, cb) {
                 }
             }
 
-            // UI 복구
             document.getElementById(player.isPhase2 ? 'phase2-ui-layer' : 'ui-layer').style.display = 'flex'; 
             player.isBusy = false; 
             
-            cb(); // 콜백 실행 (돈 증가 등)
+            cb(); 
             updateUI(); 
-            updateAudioState('main');
+            
+            // ▼▼▼ [수정 2] 음악을 안 껐다면, 다시 켤(재시작할) 필요도 없음
+            if (!keepBgm) {
+                updateAudioState('main');
+            }
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
         } 
     }, 1000);
 }
@@ -2978,50 +4266,141 @@ function playPortfolioSequence(cb) {
 
         window.openPopup = function(id) { if(player.isBusy) return; document.getElementById('modal-overlay').style.display='block'; document.getElementById(id).style.display='flex';updateAudioState('mute'); }
         window.closePopup = function() { document.getElementById('modal-overlay').style.display='none'; document.querySelectorAll('.popup').forEach(p=>p.style.display='none'); updateAudioState('main');}
-        window.showAd = function(cb) { document.getElementById('ad-overlay').style.display='flex'; adCallback = cb;updateAudioState('mute'); }
-        window.closeAd = function() { document.getElementById('ad-overlay').style.display = 'none'; if(adCallback) { adCallback(); adCallback=null;updateAudioState('main'); } }
 
-        window.openAlbaPopup = function() { document.getElementById('btn-normal-alba').disabled = player.workedThisWeek; openPopup('alba-popup'); }
-// [1] 알바비 인상 로직 (40,000 -> 50,000)
+// ========================================================
+// 📺 [광고 시스템] 토스 AdMob 보상형 광고 통합 (최종)
+// ========================================================
+// ========================================================
+// 📺 [Toss Ads] 광고 ID 설정 (대시보드 ID로 교체 필수!)
+// ========================================================
+const AD_IDS = {
+    // [리워드 광고]
+    HP_RECOVER:     "ait.v2.live.c726946e2bf645ce",        // 휴식 (체력 100% 회복)
+    EARN_MONEY:     "ait.v2.live.53f60c458918415a",      // 특급 야근 (돈 벌기)
+    JOB_REFRESH:    "ait.v2.live.97898cb247a84627",    // 채용 공고 새로고침
+    EXTEND_DEAD:    "ait.v2.live.4b0fb71d51914448",        // 마감 기한 연장
+    GAME_RESTORE:   "ait.v2.live.947df5d898d24228",        // 크래시 데이터 복구
+
+};
+
+// [수정] 토스 광고 함수 (먹통 방지 로직 적용)
+window.showAd = async function(type, successCallback) {
+    const targetId = AD_IDS[type];
+    if (!targetId) return alert("광고 ID 설정 오류");
+
+    updateAudioState('mute');
+
+    // ★ [핵심] 보상을 받았는지 체크하는 변수
+    let isRewardEarned = false;
+
+    // 화면 정리 및 게임 재개 함수
+    const forceCleanup = () => {
+        document.getElementById('modal-overlay').style.display = 'none';
+        document.getElementById('ad-overlay').style.display = 'none';
+        document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
+        
+        if(sceneContext) {
+            sceneContext.game.loop.wake(); 
+            if(sceneContext.sound && sceneContext.sound.context) {
+                sceneContext.sound.context.resume(); 
+            }
+        }
+        updateAudioState('main'); 
+    };
+
+    try {
+        const { GoogleAdMob } = await import('https://esm.sh/@apps-in-toss/web-framework');
+        if (GoogleAdMob.loadAppsInTossAdMob.isSupported() !== true) throw new Error("Not Supported");
+
+        const cleanupLoad = GoogleAdMob.loadAppsInTossAdMob({
+            options: { adGroupId: targetId },
+            onEvent: (loadEvent) => {
+                if (loadEvent.type === 'loaded') {
+                    cleanupLoad();
+                    GoogleAdMob.showAppsInTossAdMob({
+                        options: { adGroupId: targetId },
+                        onEvent: (showEvent) => {
+                            // 1. 보상 획득 시 -> 플래그만 세움 (즉시 지급 X)
+                            if (showEvent.type === 'userEarnedReward') {
+                                console.log("보상 획득 확인 (지급 대기)");
+                                isRewardEarned = true;
+                            }
+                            
+                            // 2. 광고 닫힘 시 -> 이때 보상 지급 및 화면 복구
+                            if (showEvent.type === 'dismissed') {
+                                console.log("광고 닫힘 -> 처리 시작");
+                                if (isRewardEarned) {
+                                    successCallback(); // ★ 여기서 콜백 실행
+                                }
+                                forceCleanup(); // 화면 복구
+                            }
+                        },
+                    });
+                } 
+                // 로드 단계에서 보상 이벤트가 오는 특이 케이스 대응
+                else if (loadEvent.type === 'userEarnedReward') {
+                    isRewardEarned = true;
+                }
+            },
+        });
+
+    } catch (e) {
+
+    }
+};
+
+
+
+
+        
+// [수정] 알바 팝업 열기 (ID 찾는 에러 코드 제거)
+window.openAlbaPopup = function() { 
+    // 기존에 있던 document.getElementById('btn-normal-alba')... 코드를 삭제함
+    openPopup('alba-popup'); 
+}
+// [수정] 알바 실행 (특급 야근은 무적)
 window.startWorking = function(type) {
-    if(player.hp < 20) return alert("체력 부족");
-    
-    // ★ [수정] 일반 알바비 50,000원으로 변경
+    // 1. [일반 알바]일 때만 제약 사항 체크
+    if (type === 'normal') {
+        if (player.workedThisWeek) return alert("이번 주는 이미 일을 했습니다. (다음 주에 가능)");
+        if (player.hp < 20) return alert("체력이 부족합니다. (필요: 20)");
+    }
+
+    // 2. 보상 설정
     let reward = (type === 'normal') ? 50000 : 100000;
     
     closePopup();
     
+    // 3. 실행 및 보상 지급
     playScene('bg_alba', msgs.alba, () => {
         player.money += reward; 
-        player.hp -= 20; 
-        if(type === 'normal') player.workedThisWeek = true; 
+        
+        // ★ [핵심] 일반 알바만 체력 차감 & 주간 횟수 차감
+        if (type === 'normal') {
+            player.hp -= 20; 
+            player.workedThisWeek = true;
+            showFloatingText(180, 280, `-20 HP`, '#FF5F5F');
+        } else {
+            // 특급 야근은 체력 유지!
+            showFloatingText(180, 280, `체력 소모 없음`, '#4CD964');
+        }
         
         showLog(`알바 완료! +${reward.toLocaleString()}원`); 
-        
-        // 돈 획득 플로팅
         showFloatingText(180, 230, `+${reward/10000}만`, '#FFD700');
-        // 체력 감소 플로팅
-        showFloatingText(180, 280, `-20 HP`, '#FF5F5F');
 
         addTime();
     });
 }
-
 // [2] 팝업창 텍스트도 자동으로 수정 (+4만 -> +5만)
 // 이 코드는 즉시 실행되어 화면의 글자를 바꿔줍니다.
 const albaLabel = document.querySelector('#alba-popup .card-btn:nth-of-type(1) p');
 if(albaLabel) {
     albaLabel.innerText = "+5만 / HP -20";
 }
-// [NEW] 특급 야근(광고) 시도 함수 (체력 선체크)
+
 window.trySpecialAlba = function() {
-    // 1. 체력을 먼저 체크합니다 (이게 핵심!)
-    if(player.hp < 20) {
-        return alert("체력이 부족합니다. (필요: 20)");
-    }
-    
-    // 2. 체력이 충분할 때만 광고를 보여줍니다
-    showAd(function(){
+    // 변경 후: 'EARN_MONEY' 타입 추가
+    showAd('EARN_MONEY', function(){
         startWorking('special');
     });
 }
@@ -3047,7 +4426,7 @@ window.openP2RestPopup = function() {
     // 3. 팝업 열기
     openPopup('p2-rest-popup');
 }
-        // [Ver 60.0] 사회생활 팝업 내용 개편
+// [수정] 사회생활 팝업 (부장님 퀴즈 시 '닫기' 버튼 차단)
 window.openSocialPopup = function() {
     if(player.hp < 10) return alert("멘탈이 너무 약해서 사람을 대할 수 없습니다.");
     
@@ -3055,8 +4434,14 @@ window.openSocialPopup = function() {
     const container = document.getElementById('social-content');
     const title = document.getElementById('social-title');
     
+    // ★ [핵심] 팝업 내 닫기 버튼 찾기
+    const closeBtn = document.querySelector('#social-popup .close-btn');
+    
     // 50% 확률로 퀴즈, 50% 확률로 탕비실 이벤트
     if(rand < 0.5) {
+        // 🛑 [퀴즈] 닫기 버튼 숨김 (강제 진행)
+        if(closeBtn) closeBtn.style.display = 'none';
+
         const quiz = dadJokes[Math.floor(Math.random() * dadJokes.length)];
         title.innerText = "👨‍💼 부장님의 기습 퀴즈!";
         container.innerHTML = `
@@ -3067,6 +4452,9 @@ window.openSocialPopup = function() {
             </div>
         `;
     } else {
+        // ✅ [탕비실] 닫기 버튼 다시 보이기 (선택 가능)
+        if(closeBtn) closeBtn.style.display = 'flex';
+
         title.innerText = "☕ 탕비실 생존 전략";
         container.innerHTML = `
             <div class="card-btn pantry-option" onclick="doPantryAction('politics')">
@@ -3167,18 +4555,32 @@ window.doPantryAction = function(type) {
             });
         }
         
-// [Ver 73.2 Fix] 교육비 증가폭 완화 (레벨당 70% -> 50%)
+// [최종 수정] 스킬 비용 계산 (Agency/TopTier 동결, 이후 점진적 상승)
 function getSkillCost(type) {
     let baseCost = 0;
     
-    // 기본 가격 (변경 없음)
-    if (type === 'sub') baseCost = 40000;          
+    // 1. 기본 가격
+    if (type === 'sub') baseCost = 40000;           
     else if (type === 'seminar') baseCost = 150000; 
     else if (type === 'deprep') baseCost = 500000;  
 
     let lvl = Math.floor(player.designStat / 100); 
 
-    return Math.floor(baseCost * (1 + (lvl * 0.4)));
+    // 2. 레벨별 증가분 (기존 유지)
+    // 레벨이 높을수록 기본 비용이 오름
+    let levelMult = 1 + (lvl * 0.4);
+
+    // 3. [수정] 티어별 물가 상승률 (요청사항 반영)
+    let tierMult = 1.0;
+    
+    if (player.tier === 'Space') tierMult = 5.0;       // Space: 5배 (최종 콘텐츠)
+    else if (player.tier === 'Global') tierMult = 1.2; // Global: 1.2배
+    else if (player.tier === 'Unicorn') tierMult = 1.1; // Unicorn: 1.1배
+    else if (player.tier === 'TopTier') tierMult = 1.0; // TopTier: 1.0배 (Agency와 동일)
+    // Agency는 1.0 (기본)
+
+    // 최종 비용 계산
+    return Math.floor(baseCost * levelMult * tierMult);
 }
 
 // [Ver 83.0 Fix] 자기계발 효율 감소폭 완화 (표기 로직)
@@ -3338,9 +4740,27 @@ showFloatingText(180, 230, `+${rec} 멘탈`, '#4CD964');
         addTime(false); 
     });
 }
-        window.handleProjectButton = function() {
-            if(player.isBusy) return; if(!player.isProjectStarted) { if(player.hp < 30) { showLog("체력 부족"); return; } openPopup('planning-popup'); } else { doProjectWork(); }
-        }
+       // [수정] 메인 버튼 핸들러 (체력 부족 시 안내 강화)
+window.handleProjectButton = function() {
+    // 1. 연출 중이면 클릭 방지
+    if(player.isBusy) return; 
+
+    // 2. 프로젝트가 시작되지 않았을 때 (새 프로젝트 기획 단계)
+    if(!player.isProjectStarted) { 
+        // ★ [핵심] 체력 체크 및 알림창 띄우기
+        if(player.hp < 30) { 
+            alert("체력이 부족합니다. (필요: 30)\n\n[휴식]을 하거나 [커피]를 마셔 회복하세요!"); 
+            return; 
+        } 
+        
+        // 체력 충분하면 기획 팝업 열기
+        openPopup('planning-popup'); 
+    } 
+    // 3. 이미 프로젝트 진행 중일 때 (작업 수행)
+    else { 
+        doProjectWork(); 
+    }
+}
         window.confirmPlanning = function() {
             const g = document.querySelector('input[name="genre"]:checked'); const s = document.querySelector('input[name="style"]:checked');
             if(!g || !s) return alert("선택 필수"); player.currentProjectName = document.getElementById('project-name').value || "무제"; currentGenreId = g.value; currentStyleId = s.value; closePopup(); openPopup('mission-popup');
@@ -3349,84 +4769,81 @@ showFloatingText(180, 230, `+${rec} 멘탈`, '#4CD964');
             player.currentStrategy = st; closePopup(); player.isProjectStarted = true; player.deadline = Math.floor(Math.random() * 5) + 8; player.currentWeekInProject = 0; player.portfolioProgress = 0; showLog("프로젝트 시작!"); updateUI(); playScene('scene_burning', ["자 이제 시작이야!!"], ()=>{});
         }
         
-        // [Ver 58.1] Phase 1 포트폴리오 작업 (히든 시너지 추가)
+// ========================================================
+// [수정] 포트폴리오 작업 (위기 상황 발동 + 정상 작업 분리)
+// ========================================================
+
+// 1. 작업 버튼 눌렀을 때 실행되는 메인 함수
 window.doProjectWork = function() {
-    // 1. 비용/체력 체크
-    if(player.hp < 30) return alert("체력 부족 (필요: 30)"); 
+    // 1. 체력 체크
+    if(player.hp < 30) return alert("체력이 부족합니다. (필요: 30)");
     
+    closePopup(); // 혹시 열려있는 팝업 닫기
 
-    closePopup();
+    // 2. [핵심] 5% 확률로 '응답 없음' 위기 발동!
+    // (테스트할 때는 0.05를 1.0으로 바꾸면 무조건 뜹니다)
+    if (Math.random() < 0.07) { 
+        startCrisisGame(); // ★ 위기 게임 시작 (나중에 추가한 함수)
+        return; // 여기서 함수 종료 (정상 작업은 위기 넘기고 실행됨)
+    }
 
-    // 2. 작업 연출
+    // 3. 위기가 아니면 정상적으로 일하기
+    processNormalWork();
+};
+
+// 2. [신규] 정상적인 업무 처리 함수 (위기 극복 후에도 이걸 호출함)
+function processNormalWork() {
     playPortfolioSequence(() => {
-        player.hp -= 30; 
-    
+        player.hp -= 30; // 체력 소모
         
-    // [수정 1] 진행도 하향 (15 -> 9) : 약 11~12회 클릭 필요 (게임시간 1달 소요)
+        // 진행도 증가 (9로 하향된 버전)
         let progress = 9; 
         player.portfolioProgress += progress;
 
-        // [수정 2] 퀄리티(점수) 보상 소폭 상향 (고생한 만큼 보상)
-        // 기본 1~5 -> 2~6점으로 변경
+        // 퀄리티 계산
         let baseGain = Math.floor(Math.random() * 5) + 2; 
         let statBonus = player.designStat * 0.04; 
         let equipBonus = player.currentPower * 0.5;
         let qualityGain = baseGain + statBonus + equipBonus;
 
         // ---------------------------------------------------------
-        // [NEW] 히든 시너지(궁합) 로직 확장 (Ver 71.0)
+        // [시너지 로직] (기존 코드 그대로 복구)
         // ---------------------------------------------------------
         let synergyMult = 1.0;
         let synergyMsg = ""; 
-
         const pair = currentGenreId + '+' + currentStyleId;
 
         // 1) 찰떡궁합 (Best): +20%
         if (
-            pair === 'g1+s1' || // 금융+신뢰
-            pair === 'g2+s2' || // 배달+팝
-            pair === 'g3+s4' || // 게임+레트로
-            pair === 'g4+s3' || // 공공+미니멀
-            pair === 'g5+s5' || // 패션+럭셔리
-            // --- 신규 조합 ---
-            pair === 'g6+s7' || // AI + 사이버펑크 (국룰)
-            pair === 'g7+s1' || // 의료 + 신뢰감 (필수)
-            pair === 'g8+s2' || // 키즈 + 팝한 (귀여움)
-            pair === 'g9+s6'    // 환경 + 오가닉 (자연)
+            pair === 'g1+s1' || pair === 'g2+s2' || pair === 'g3+s4' || 
+            pair === 'g4+s3' || pair === 'g5+s5' || pair === 'g6+s7' || 
+            pair === 'g7+s1' || pair === 'g8+s2' || pair === 'g9+s6'
         ) {
             synergyMult = 1.2;
             synergyMsg = " (컨셉 대박! +20%)";
         }
-        // 2) 상극 (Worst): -20% (패널티 강화)
+        // 2) 상극 (Worst): -20%
         else if (
-            pair === 'g1+s8' || // 금융 + 브루탈리즘 (은행앱이 너무 거칠어)
-            pair === 'g7+s7' || // 의료 + 사이버펑크 (무서운 병원)
-            pair === 'g4+s5' || // 공공 + 럭셔리 (세금 낭비 논란)
-            pair === 'g9+s5'    // 환경 + 럭셔리 (그린워싱 의심)
+            pair === 'g1+s8' || pair === 'g7+s7' || 
+            pair === 'g4+s5' || pair === 'g9+s5'
         ) {
             synergyMult = 0.8;
             synergyMsg = " (컨셉 미스... -20%)";
         }
-        // 3) 나쁘지 않음 (So-so): -10%
-        else if (
-            pair === 'g1+s2' || // 금융+팝
-            pair === 'g3+s3'    // 게임+미니멀
-        ) {
+        // 3) 무난함: -10%
+        else if (pair === 'g1+s2' || pair === 'g3+s3') {
             synergyMult = 0.9;
             synergyMsg = " (애매함... -10%)";
         }
-        // ---------------------------------------------------------
 
         // 전략(속도/퀄리티) 반영
         if(player.currentStrategy === 'speed') qualityGain *= 0.7;
-
-        // 최종 시너지 적용
+        
+        // 최종 점수 반영
         qualityGain = Math.floor(qualityGain * synergyMult);
         player.portfolioQuality += qualityGain;
 
-        // 로그 출력 (여기서 유저가 깨닫게 됨)
         showLog(`작업 완료! 퀄리티 +${qualityGain}${synergyMsg}`); 
-        
         addTime();
     });
 }
@@ -3436,6 +4853,7 @@ window.doProjectWork = function() {
             let grade = 'C'; if(score >= 800) grade='S'; else if(score >= 400) grade='A'; else if(score >= 150) grade='B';
             player.history.push({name:player.currentProjectName, score:score, grade:grade});
             if(score > player.bestPortfolioScore) player.bestPortfolioScore = score;
+            submitTossScore();
             alert(`[마감] ${player.currentProjectName}\n등급: ${grade} (${score}점)`);
             player.portfolioProgress = 0; player.portfolioQuality = 0; saveGameData(); updateUI();
         }
@@ -3455,7 +4873,7 @@ window.doProjectWork = function() {
             });
         }
         window.buyItem = function(id) {
-            let item = shopItems.find(i=>i.id===id); if(player.money >= item.cost) { player.money-=item.cost; player.inventory.push(item.name); player.currentPower = item.power; alert(`${item.name} 구매 완료!`); saveGameData(); updateUI(); renderShop(); } else alert("돈 부족!");
+            let item = shopItems.find(i=>i.id===id); if(player.money >= item.cost) { player.money-=item.cost; player.inventory.push(item.name); player.currentPower = item.power; alert(`${item.name} 구매 완료!`); saveGameData(); updateUI(); renderShop(); } else alert("돈이 부족합니다!");
         }
 // [UPDATE] 인벤토리 열기 (스크롤바 간격 & 화살표 개선 적용)
 window.renderInventory = function() {
@@ -3708,46 +5126,166 @@ window.startPhase2 = function() {
             openPopup('ranking-popup');
         }
 
-        function saveGameData() { localStorage.setItem('designer_game_data', JSON.stringify(player)); localStorage.setItem('designer_game_sound', isSoundOn); }
-// [수정된 loadGameData 함수]
+        // ▼▼▼ 아래 3개 함수를 기존 코드에 덮어쓰세요 ▼▼▼
+
+function saveGameData() { 
+// ★ [핵심] 연출(컷신, 엔딩, 미니게임) 중일 때는 저장을 아예 막아버림
+    // 이렇게 하면 '빈 방'이나 '이상한 화면' 상태가 저장될 일이 0%가 됩니다.
+    if (player.isBusy) {
+        console.log("⚠️ 연출 중이라 저장을 건너뜁니다. (데이터 보호)");
+        return;
+    }
+
+    // 유저 해시를 키값에 포함
+    localStorage.setItem('designer_game_data_' + tossUserHash, JSON.stringify(player)); 
+    localStorage.setItem('designer_game_sound', isSoundOn); 
+}
+
+// [수정] 데이터 로드 (안전장치 추가)
 function loadGameData() { 
-    const savedData = localStorage.getItem('designer_game_data'); 
+    // 유저 해시로 데이터 로드
+    const savedData = localStorage.getItem('designer_game_data_' + tossUserHash); 
+    
     if(savedData) { 
-        // 1. 저장된 데이터 불러오기
         const parsed = JSON.parse(savedData);
-        player = { ...initialPlayerState, ...parsed }; 
+        player = Object.assign({}, initialPlayerState, parsed);
         
-        // 2. 튜토리얼 데이터 복구 로직 (기존 유지)
-        if (typeof player.isTutorialDone === 'undefined') {
-            player.isTutorialDone = player.isPhase2 ? true : false;
+        // ★ [핵심] 불러올 때 '연출 중' 상태면 강제로 해제 (멈춤 현상 방지)
+        player.isBusy = false; 
+        
+        // ★ [핵심] 배경이 '빈 방(엔딩)' 상태로 저장되었을 리는 없지만, 혹시 모르니 티어값 보정
+        if(!['Agency','TopTier','Unicorn','Global','Space'].includes(player.tier)) {
+            player.tier = 'Agency';
         }
-// [NEW] ★ 여기가 안전한 위치입니다! ★
-        // 기존 세이브 파일에 공백기 카운터가 없으면 0으로 초기화
-        if (typeof player.idleWeeks === 'undefined') {
-            player.idleWeeks = 0;
-        }
-        // ★★★ [핵심 수정] 저장된 월급 정보를 최신 코드로 갱신 ★★★
-        // 이 줄을 추가해야 코드를 바꿔도 세이브 파일에 즉시 반영됩니다.
-        if (player.isPhase2) {
-            updateSalary(); 
-        }
+
+        // 구버전 호환성
+        if (typeof player.isTutorialDone === 'undefined') player.isTutorialDone = player.isPhase2 ? true : false;
+        if (typeof player.idleWeeks === 'undefined') player.idleWeeks = 0;
+        if (player.isPhase2) updateSalary(); 
+    } else {
+        // 데이터 없으면 초기화
+        console.log("새로운 유저 데이터 생성 (" + tossUserHash + ")");
+        player = JSON.parse(JSON.stringify(initialPlayerState));
+        genres.forEach(g => player.mastery.genre[g.id] = 1); 
+        styles.forEach(s => player.mastery.style[s.id] = 1);
     }
     
     const savedSound = localStorage.getItem('designer_game_sound'); 
     if(savedSound !== null) isSoundOn = (savedSound === 'true'); 
-}    
+}
+
+// [수정] 게임 시작 함수 (비동기 로그인 로직 추가)
+window.startGame = async function() {
+    const intro = document.getElementById('intro-layer');
+    if(!intro) return;
+// 1. [핵심] 토스 라이브러리 동적 로딩 및 로그인 시도
+    try {
+        const { getUserKeyForGame } = await import('https://esm.sh/@apps-in-toss/web-framework');
+        
+        if (getUserKeyForGame) {
+            const result = await getUserKeyForGame();
+            if (result && result.type === 'HASH') {
+                console.log("토스 로그인 성공:", result.hash);
+                
+                tossUserHash = result.hash; 
+            }
+        }
+    } catch (e) {
+        console.log("토스 환경이 아님 (게스트 모드):", e);
+        
+        // ▼▼▼ [확인용] 실패(게스트) 시 알림창 띄우기 ▼▼▼
+        alert("⚠️ 토스 앱이 아닙니다.\n게스트 모드로 시작합니다.");
+    }
+
+    // 2. 결정된 유저(또는 게스트)로 데이터 로드
+    loadGameData();
+    updateUI(); // UI 갱신
+
+    
+    // 3. 인트로/사운드 처리 (기존 로직)
+    // P2 데이터 호환성 처리
+    if(typeof player.isP2TutorialDone === 'undefined') player.isP2TutorialDone = false;
+
+
+    intro.style.transition = "opacity 0.5s";
+    intro.style.opacity = "0";
+
+    setTimeout(() => {
+        intro.style.display = "none";
+        
+        // 튜토리얼 분기 처리
+        if (player.isPhase2 && !player.isP2TutorialDone) {
+            startTutorialDialogue();
+        } else if (!player.isPhase2 && !player.isTutorialDone) {
+            startTutorialDialogue();
+        } else {
+            realGameStart();
+        }
+    }, 500); 
+};
+
+// ▼▼▼ [1] 점수 제출 & 리더보드 열기 함수 추가 ▼▼▼
+
+// 1. 현재 점수를 토스 서버에 제출하는 함수
+async function submitTossScore() {
+    try {
+        // 현재 총점 계산 (기존 함수 활용)
+        const myTotalScore = calculateTotalScore(); 
+        
+        // 라이브러리 로드
+        const { submitGameCenterLeaderBoardScore } = await import('https://esm.sh/@apps-in-toss/web-framework');
+        
+        if (submitGameCenterLeaderBoardScore) {
+            // 점수는 문자열(String)로 보내야 함
+            const result = await submitGameCenterLeaderBoardScore({ score: myTotalScore.toString() });
+            
+            if (result && result.statusCode === 'SUCCESS') {
+                console.log(`점수 제출 성공: ${myTotalScore}점`);
+            }
+        }
+    } catch (e) {
+        // 조용히 넘어감 (게임 흐름 방해 X)
+        console.log("점수 제출 건너뜀 (토스 환경 아님)"); 
+    }
+}
+
+// 2. 리더보드 열기 (점수 제출 -> 리더보드 오픈 순서)
+window.openTossLeaderboard = async function() {
+    try {
+        const { openGameCenterLeaderboard, isMinVersionSupported } = await import('https://esm.sh/@apps-in-toss/web-framework');
+
+        // 최신 점수를 먼저 서버에 반영! (중요)
+        await submitTossScore();
+
+        // 버전 체크
+        const isSupported = isMinVersionSupported({ android: '5.221.0', ios: '5.221.0' });
+
+        if (isSupported) {
+            console.log("리더보드 뷰 호출");
+            await openGameCenterLeaderboard();
+        } else {
+            alert("토스 앱을 업데이트해주세요.\n(리더보드 미지원 버전)");
+        }
+    } catch (e) {
+        // 토스 앱이 아닐 경우
+        alert("이 기능은 토스 앱에서만 가능합니다.\n(현재 점수: " + calculateTotalScore().toLocaleString() + "점)");
+    }
+};
+
 window.toggleSound = function() { isSoundOn = document.getElementById('sound-toggle').checked; if(sceneContext && sceneContext.sound) sceneContext.sound.mute = !isSoundOn; saveGameData(); }
-// [수정된 resetGameData 함수]
+// [수정] 데이터 초기화 (유저별 데이터 삭제로 변경)
 window.resetGameData = function() { 
-    if(confirm("정말 초기화 하시겠습니까?")) { 
-        // 순수 게임 데이터만 삭제
+    if(confirm("정말 모든 데이터를 삭제하고 초기화 하시겠습니까?")) { 
+        // 1. 현재 로그인된 유저의 데이터 삭제 (핵심!)
+        localStorage.removeItem('designer_game_data_' + tossUserHash); 
+        
+        // 2. 혹시 남아있을지 모르는 옛날 데이터도 삭제 (청소용)
         localStorage.removeItem('designer_game_data'); 
         
-        // ★ 튜토리얼 기록 삭제 코드(removeItem('tutorialViewed')) 제거됨
-        
+        // 3. 새로고침
         location.reload(); 
     } 
-}      
+};
 /* -----------------------------------------------------------
    [종료 팝업 및 뒤로가기 방지 로직]
    HTML 버튼의 onclick="함수명"과 정확히 일치시켰습니다.
@@ -3901,24 +5439,26 @@ function getHofBuffs() {
     return buffs;
 }
 
-// 3. 메인 팝업 열기 & 렌더링
-// [Ver 64.2] 명예의 전당 UI (출신 티어 표시 추가)
+// [수정] 명예의 전당 열기 (데이터 안전장치 추가)
 window.openHallOfFame = function() {
+    // ★ [핵심 수정] 데이터가 없으면 빈 배열로 즉시 초기화 (에러 방지)
+    if (!player.hallOfFame) player.hallOfFame = [];
+    if (!player.history) player.history = [];
+
     const list = document.getElementById('hof-list');
     list.innerHTML = '';
     
     player.hallOfFame.forEach((item, index) => {
+        // 아이콘/텍스트 설정 (기존 로직 유지)
         let typeIcon = item.buffType === 'wealth' ? '💰' : (item.buffType === 'speed' ? '⚡' : '🎖️');
         let typeName = item.buffType === 'wealth' ? '연봉' : (item.buffType === 'speed' ? '속도' : '성과');
         
-        // [NEW] 버프 수치 계산 (UI 표시용)
         let power = 1;
         if (item.companyTier === 'TopTier') power = 2;
         else if (item.companyTier === 'Unicorn') power = 3;
         else if (item.companyTier === 'Global') power = 4;
         else if (item.companyTier === 'Space') power = 5;
 
-        // 출신 회사 라벨 (예: [Space])
         let originTag = item.companyTier ? `[${item.companyTier}]` : `[Agency]`;
 
         list.innerHTML += `
@@ -3934,16 +5474,17 @@ window.openHallOfFame = function() {
         </li>`;
     });
 
-    // 빈 슬롯
+    // 빈 슬롯 표시
     for(let i=player.hallOfFame.length; i<3; i++) {
         list.innerHTML += `<li style="opacity:0.5; justify-content:center; border:1px dashed #555; font-size:12px;">(빈 슬롯)</li>`;
     }
 
-    // 상단 요약 업데이트
-    const buffs = getHofBuffs();
-    document.getElementById('hof-wealth').innerText = buffs.wealth;
-    document.getElementById('hof-speed').innerText = buffs.speed;
-    document.getElementById('hof-fame').innerText = buffs.fame;
+    // 상단 요약 업데이트 (안전장치 함수 호출)
+    const buffs = (typeof getHofBuffs === 'function') ? getHofBuffs() : { wealth:0, speed:0, fame:0 };
+    
+    if(document.getElementById('hof-wealth')) document.getElementById('hof-wealth').innerText = buffs.wealth;
+    if(document.getElementById('hof-speed')) document.getElementById('hof-speed').innerText = buffs.speed;
+    if(document.getElementById('hof-fame')) document.getElementById('hof-fame').innerText = buffs.fame;
 
     openPopup('hall-of-fame-popup');
 }
@@ -4010,60 +5551,32 @@ window.removeFromHof = function(index) {
 }
 
 
-window.startGame = function() {
-    const intro = document.getElementById('intro-layer');
-    if(!intro) return;
-
-    loadGameData();
-    updateUI(); 
-    
-    // P2 데이터가 없는 구버전 세이브 호환성 처리
-    if(typeof player.isP2TutorialDone === 'undefined') player.isP2TutorialDone = false;
-
-    if(isSoundOn && soundIntro) {
-        soundIntro.play();
-        currentBgm = soundIntro;
-    }
-
-    intro.style.transition = "opacity 0.5s";
-    intro.style.opacity = "0";
-
-    setTimeout(() => {
-        intro.style.display = "none";
-        
-        // ★ [최종 판단 로직] ★
-        // 1. 페이즈 2인데, P2 튜토리얼을 안 봤다면 -> 튜토리얼 시작
-        if (player.isPhase2 && !player.isP2TutorialDone) {
-            startTutorialDialogue();
-        }
-        // 2. 페이즈 1인데, P1 튜토리얼을 안 봤다면 -> 튜토리얼 시작
-        else if (!player.isPhase2 && !player.isTutorialDone) {
-            startTutorialDialogue();
-        }
-        // 3. 그 외에는 바로 게임 시작
-        else {
-            realGameStart();
-        }
-    }, 500); 
-}
 
 
+
+// [수정] 메인 게임 화면 진입 (초기화 강화)
 function realGameStart() {
     const w = sceneContext.scale.width;
     const h = sceneContext.scale.height;
 
-    // 1. 모든 캐릭터 일단 숨김
+    // 1. [핵심] 엔딩 BGM이 들린다면 강제로 끄기
+    if(soundEnding && soundEnding.isPlaying) {
+        soundEnding.stop();
+    }
+
+    // 2. 캐릭터 일단 다 숨김
     if(charHoodieSprite) charHoodieSprite.setVisible(false);
     if(charSuitSprite) charSuitSprite.setVisible(false);
     if(charWorkSprite) charWorkSprite.setVisible(false);
     if(charSuitWorkSprite) charSuitWorkSprite.setVisible(false);
 
-    // 2. 페이즈에 맞는 '일하는' 캐릭터 켜기
+    // 3. 페이즈에 맞는 캐릭터와 배경 켜기
     if(player.isPhase2) {
         document.getElementById('phase2-ui-layer').style.display = 'flex';
+        
+        // 배경 강제 설정 (빈 화면 방지)
         setBgByTier(player.tier); 
         
-        // [핵심] 정장 입고 일하는 모습 ON
         if(charSuitWorkSprite) {
             charSuitWorkSprite.setVisible(true);
             adjustCharacterSize(charSuitWorkSprite, w, h);
@@ -4071,38 +5584,65 @@ function realGameStart() {
     } else {
         document.getElementById('ui-layer').style.display = 'flex';
         
-        // [핵심] 후드 입고 일하는 모습 ON
+        // 배경 강제 설정
+        if(bgSprite) {
+            let bgKey = isNightTime() ? 'bg_main_night' : 'bg_main';
+            if(sceneContext.textures.exists(bgKey)) bgSprite.setTexture(bgKey);
+            else bgSprite.setTexture('bg_main'); // 안전장치
+            fitToScreen(bgSprite);
+        }
+
         if(charWorkSprite) {
             charWorkSprite.setVisible(true);
             adjustCharacterSize(charWorkSprite, w, h);
         }
     }
     
+    // 4. 상태 강제 초기화 (혹시 모르니 한번 더)
+    player.isBusy = false;
+    if(sceneOverlay) sceneOverlay.setVisible(false); // 컷신 배경 끄기
+
     updateAudioState('main');
 }
-// [수정된 updateAudioState 함수]
+// [수정] 오디오 상태 관리 (SSS급 우선순위 적용)
 function updateAudioState(state) {
     if (!isSoundOn) {
-        // 소리 끔 상태라면 모든 소리 정지
         if(currentBgm && currentBgm.isPlaying) currentBgm.stop();
         if(soundIntro) soundIntro.stop();
+        // SSS 음악도 멈춤
+        if(soundSSS && soundSSS.isPlaying) soundSSS.stop();
         return;
     }
 
-    // state: 'main' (메인화면 재생), 'mute' (일시정지)
+    // state: 'main' (재생), 'mute' (일시정지/멈춤)
     if (state === 'mute') {
         if (soundP1 && soundP1.isPlaying) soundP1.pause();
         if (soundP2 && soundP2.isPlaying) soundP2.pause();
-        if (soundIntro && soundIntro.isPlaying) soundIntro.pause();
+        if (soundSSS && soundSSS.isPlaying) soundSSS.pause(); // SSS 일시정지
+        if (soundAI && soundAI.isPlaying) soundAI.pause();
     } 
     else if (state === 'main') {
-        // ★★★ [핵심 수정] 묻지도 따지지도 말고 인트로는 일단 끈다 (겹침 방지)
-        if (soundIntro) soundIntro.stop();
+        if (soundAI) soundAI.stop(); // 컷신 음악 끄기
 
-        // 현재 페이즈에 맞는 BGM 선택
-        let targetBgm = player.isPhase2 ? soundP2 : soundP1;
+        // ▼▼▼ [핵심] BGM 우선순위 결정 로직 ▼▼▼
+        let targetBgm;
 
-        // 만약 다른 음악(이전 페이즈 음악 등)이 돌고 있다면 끔
+        // 1순위: SSS급 프로젝트 진행 중일 때
+        if (player.currentProject && player.currentProject.isSingularity) {
+            targetBgm = soundSSS;
+        } 
+        // 2순위: Phase 2 (직장인)
+        else if (player.isPhase2) {
+            targetBgm = soundP2;
+        } 
+        // 3순위: Phase 1 (취준생)
+        else {
+            targetBgm = soundP1;
+        }
+
+        // --- 재생 로직 (변경 필요할 때만 스위칭) ---
+        
+        // 만약 다른 음악이 나오고 있다면 끄기
         if (currentBgm && currentBgm !== targetBgm) {
             currentBgm.stop();
         }
@@ -4112,6 +5652,7 @@ function updateAudioState(state) {
             targetBgm.play();
         }
         
+        // 현재 BGM 갱신
         currentBgm = targetBgm;
     }
 }
@@ -4161,49 +5702,68 @@ function showTutoLine() {
     }
 }
 
-// 3. 다음 버튼 클릭 (페이즈에 따라 저장 키 분기)
+// [수정] 튜토리얼 종료 처리 (자동 기획 팝업 오픈)
 window.nextTutorialLine = function() {
     tutoIndex++;
     
-    // ★ 현재 페이즈 메시지 길이 확인
+    // 현재 페이즈 메시지 배열 확인
     const currentMsgs = player.isPhase2 ? tutoMessagesP2 : tutoMessages;
 
     if(tutoIndex < currentMsgs.length) {
+        // 대사 진행
         showTutoLine();
     } else {
-        // ★ 페이즈에 맞게 완료 처리
-        if (player.isPhase2) {
-            player.isP2TutorialDone = true; // 페이즈 2 완료
-        } else {
-            player.isTutorialDone = true;   // 페이즈 1 완료
-        }
-        
-        saveGameData(); // 저장
-
+        // 튜토리얼 종료 (창 닫기)
         document.getElementById('tutorial-overlay').style.display = 'none';
-        realGameStart();
+
+        if (player.isPhase2) {
+            // [Phase 2] 직장인
+            player.isP2TutorialDone = true; 
+            saveGameData();
+            realGameStart();
+        } else {
+            // [Phase 1] 취준생
+            player.isTutorialDone = true;   
+            
+            // 1. 메인 화면(캐릭터, UI) 표시
+            realGameStart(); 
+            
+            // 2. 저장
+            saveGameData();
+            
+            // 3. [핵심] 안내 후 '기획 팝업' 자동 오픈
+            setTimeout(() => {
+                alert("🚀 튜토리얼 완료!\n\n이제 당신만의 첫 프로젝트를 시작할 차례입니다.\n원하는 주제와 스타일을 선택해 보세요!");
+                
+                // 강제 시작 대신, 기획 팝업을 열어줌
+                openPopup('planning-popup'); 
+            }, 300);
+        }
     }
 }
-// [수정된 플로팅 텍스트 함수]
+// [수정] 플로팅 텍스트 (이모지+줄바꿈 지원을 위해 innerHTML 사용)
 function showFloatingText(x, y, text, color='#fff') {
     const el = document.createElement('div');
     el.className = 'float-text';
-    el.innerText = text;
+    
+    // ★ 핵심 변경: innerText -> innerHTML (태그 인식)
+    el.innerHTML = text; 
+    
     el.style.left = x + 'px';
     el.style.top = y + 'px';
     el.style.color = color;
     
-    // 중앙 정렬 보정
+    // 중앙 정렬 및 텍스트 중앙 정렬 추가
     el.style.transform = 'translate(-50%, -50%)'; 
+    el.style.textAlign = 'center'; 
+    el.style.zIndex = '99999';
     
-    // ★★★ [핵심 수정] body가 아니라 game-container에 넣어야 함 ★★★
-    // 그래야 게임 화면(360x640) 안에서 좌표가 작동합니다.
     document.getElementById('game-container').appendChild(el);
 
     // 애니메이션 후 삭제
     setTimeout(() => {
         el.remove();
-    }, 800);
+    }, 1000); // 1초 뒤 사라짐
 }
 // [낮/밤 판별 함수]
 // 밤 기준: 오후 6시(18시) ~ 오전 6시(06시)
@@ -4257,42 +5817,38 @@ function startInterview(jobName, tier) {
     openPopup('interview-popup');
 }
 
-// [수정된 updateInterviewUI 함수]
+// [수정] UI 업데이트 (스탯 표시 제거 -> 대기 상태 텍스트)
 function updateInterviewUI() {
-    // 1. 상단 스탯 표시
     const statsDisplay = document.getElementById('interview-stats-display');
+    
+    // 1. 상단 박스 초기화 (질문이 넘어갈 때마다)
     if(statsDisplay) {
-        statsDisplay.innerHTML = `
-            <span style="color:#FF5F5F;">🔥${interviewStats.P}</span> | 
-            <span style="color:#3182F6;">🧠${interviewStats.L}</span> | 
-            <span style="color:#FFD700;">✨${interviewStats.S}</span>
-        `;
+        // 기존 클래스 제거 (애니메이션 리셋)
+        statsDisplay.classList.remove('reaction-pop');
+        
+        // 기본 상태 텍스트 (이모지 없음)
+        statsDisplay.innerHTML = `<span style="color:#B0B8C1; font-size:12px;">👂 경청 중...</span>`;
+        statsDisplay.style.borderColor = "#444"; // 테두리 색 초기화
     }
 
     // 종료 체크
     if (interviewStep >= 3) {
-        finishInterview();
+        playInterviewSuspense();
         return;
     }
 
     const qData = currentQuestions[interviewStep];
     
-    // 2. 질문 텍스트
+    // 2. 질문 텍스트 업데이트
     document.getElementById('interview-q-text').innerText = `Q${interviewStep+1}. ${qData.q}`;
 
-    // 3. ★핵심 수정★ 힌트(목표) 표시 로직 변경
+    // 3. 힌트 업데이트
     const hintEl = document.getElementById('interview-q-hint');
-    
-    // [기존 문제] if (tier === 'Agency') ... (이게 고정되어 있었음)
-    // [수정] 데이터에 있는 hint를 그대로 가져옴
     if (interviewTargetJob && interviewTargetJob.hint) {
         hintEl.innerHTML = interviewTargetJob.hint;
     } else {
-        // 혹시 데이터가 없을 경우를 대비한 기본값
         hintEl.innerHTML = "목표: 최선을 다해 답변하세요!";
     }
-    
-    // 스타일 적용 (파란색 테두리/배경 스타일로 통일)
     hintEl.className = "interview-hint-badge hint-blue"; 
 
     // 4. 답변 버튼 생성
@@ -4303,108 +5859,184 @@ function updateInterviewUI() {
 
     answers.forEach(ans => {
         const btn = document.createElement('button');
-        btn.className = 'interview-btn'; // 아까 만든 3색 컬러 버튼 클래스
+        btn.className = 'interview-btn'; 
         btn.innerText = ans.text;
         btn.onclick = () => submitAnswer(ans.effect);
         ansContainer.appendChild(btn);
     });
 }
 
-// 3. 답변 선택 (스탯 변동 적용)
+// [수정] 답변 제출 (플로팅 제거 -> 우측 상단에 반응 표시)
 function submitAnswer(effect) {
-    // 스탯 증감 적용
+    // 1. 스탯 계산
     interviewStats.P += effect.P;
     interviewStats.L += effect.L;
     interviewStats.S += effect.S;
 
-    // 0 미만 방지 (최소 0)
     interviewStats.P = Math.max(0, interviewStats.P);
     interviewStats.L = Math.max(0, interviewStats.L);
     interviewStats.S = Math.max(0, interviewStats.S);
 
-    // 연출 (가장 많이 오른 스탯 표시)
-    let msg = "";
-    let color = "#fff";
-    if (effect.P > 3) { msg = "열정 상승! 🔥"; color="#FF5F5F"; }
-    else if (effect.L > 3) { msg = "논리력 어필! 🧠"; color="#3182F6"; }
-    else if (effect.S > 3) { msg = "센스 있다! ✨"; color="#FFD700"; }
-    else { msg = "무난한 대답..."; color="#ccc"; }
+    // 2. 반응 분석
+    let maxChange = Math.max(effect.P, effect.L, effect.S);
+    let minChange = Math.min(effect.P, effect.L, effect.S);
+    
+    let emoji = "";
+    let reactionMsg = "";
+    let reactionColor = "#fff"; // 텍스트 색상
+    let borderColor = "#444";   // 박스 테두리 색상
 
-    showFloatingText(180, 300, msg, color);
+    // (1) 대실수
+    if (minChange <= -8) {
+        emoji = "😡"; 
+        reactionMsg = "치명적 실수!";
+        reactionColor = "#FF5F5F"; 
+        borderColor = "#FF5F5F";
+    }
+    else if (minChange <= -5) {
+        emoji = "🤨"; 
+        reactionMsg = "반응이 싸합니다.";
+        reactionColor = "#FF8B8B"; 
+        borderColor = "#FF8B8B";
+    }
+    // (2) 대박
+    else if (maxChange >= 12) {
+        emoji = "🤩"; 
+        reactionMsg = "완벽합니다!";
+        reactionColor = "#4CD964"; 
+        borderColor = "#4CD964";
+    }
+    else if (maxChange >= 8) {
+        emoji = "🙂"; 
+        reactionMsg = "호감 상승";
+        reactionColor = "#66FF99"; 
+        borderColor = "#66FF99";
+    }
+    // (3) 무난함
+    else {
+        emoji = "😐"; 
+        reactionMsg = "평이하군요.";
+        reactionColor = "#B0B8C1"; 
+        borderColor = "#B0B8C1";
+    }
 
+    // 3. [핵심] 우측 상단 박스에 집어넣기 (겹침 방지)
+    const statsDisplay = document.getElementById('interview-stats-display');
+    if(statsDisplay) {
+        // 내용 교체 (이모지 + 텍스트)
+        statsDisplay.innerHTML = `
+            <span style="font-size:18px;">${emoji}</span>
+            <span style="font-size:13px; font-weight:bold; color:${reactionColor};">${reactionMsg}</span>
+        `;
+        
+        // 테두리 색상 변경으로 강조
+        statsDisplay.style.borderColor = borderColor;
+        
+        // 팝업 애니메이션 효과 (강조)
+        statsDisplay.classList.remove('reaction-pop'); // 리셋
+        void statsDisplay.offsetWidth; // 리플로우 강제 (애니메이션 재시작용 꼼수)
+        statsDisplay.classList.add('reaction-pop');
+    }
+
+    // 4. 다음 단계로
     interviewStep++;
-    updateInterviewUI();
+    
+    // 답변 버튼을 0.8초 뒤에 갱신 (반응을 볼 시간을 줌)
+    setTimeout(() => {
+        updateInterviewUI();
+    }, 800);
 }
 
-// [수정] 면접 결과 처리 (현실적 난이도 상향 Ver)
-// - 억지스러운 운빨 요소 제거
-// - 찍기 방지용 최소 커트라인 설정
-function finishInterview() {
-    closePopup();
+// [수정] 면접 결과 처리 (디자인 팝업 적용)
+window.finishInterview = function() {
+    closePopup(); // 면접 진행 팝업 닫기
     
     let passed = false;
+    let failReason = "";
 
-    // [기본 스탯 10 + 답변으로 얻는 점수]
-    // 답변 1개당 평균 획득량: Best(+6~7), Good(+4~5), Bad(+0~2)
-    
-    // 1. Agency (에이전시): 열정(P) 중시
-    if (interviewTargetJob.tier === 'Agency') {
-        // 목표: 15 (필요 획득량 +5)
-        // 해석: Best 답변 1개면 바로 통과, Good 답변이면 2개 필요.
-        if (interviewStats.P >= 15 || (interviewStats.P >= 13 && interviewStats.L >= 13)) {
-            passed = true;
-        }
+    // 1. 과락 및 점수 체크 (기존 로직 유지)
+    if (interviewStats.P < 5 || interviewStats.L < 5 || interviewStats.S < 5) {
+        passed = false;
+        failReason = "인재상과 맞지 않는 부분이 있어 아쉽게 탈락하셨습니다.";
     } 
-    // 2. 상위 기업 (TopTier ~ Space): 논리(L) & 센스(S) 중시
     else {
-        // 목표: 한 우물 18 (필요 획득량 +8)
-        // 해석: 3문제 중 2문제는 확실하게 강점을 어필해야 함.
-        // ------------------------------------------------
-        // 목표: 밸런스 14 & 14 (필요 획득량 각각 +4)
-        // 해석: 한쪽으로 치우치지 않고 골고루 정답을 맞춘 경우.
-        if (
-            interviewStats.L >= 18 ||  // 논리 전문가
-            interviewStats.S >= 18 ||  // 센스 전문가
-            (interviewStats.L >= 14 && interviewStats.S >= 14) // 육각형 인재
-        ) {
-            passed = true;
+        if (interviewTargetJob.tier === 'Agency') {
+            if (interviewStats.P >= 20) passed = true;
+            else failReason = `열정이 부족하여 불합격했습니다.\n(필요: 열정 20점 이상)`;
+        } 
+        else {
+            if (interviewStats.L >= 22 || interviewStats.S >= 22) passed = true;
+            else failReason = `확실한 강점(논리 or 센스 22점↑) 어필에 실패했습니다.`;
         }
     }
 
-    if (passed) {
-        // 합격 처리
-        if(interviewCooldowns[interviewTargetJob.name]) delete interviewCooldowns[interviewTargetJob.name];
+    // 2. 팝업 데이터 설정 및 열기
+    showInterviewResultPopup(passed, failReason);
+};
 
+// [신규] 결과 팝업 띄우기 함수
+function showInterviewResultPopup(passed, failReason) {
+    const popup = document.getElementById('interview-result-popup');
+    const card = document.getElementById('interview-result-card');
+    const icon = document.getElementById('res-icon');
+    const title = document.getElementById('res-title');
+    const company = document.getElementById('res-company');
+    const msg = document.getElementById('res-msg');
+    const subMsg = document.getElementById('res-sub-msg');
+    const btnArea = document.getElementById('res-btn-area');
+
+    // 팝업 열기 (배경 오버레이 포함)
+    document.getElementById('modal-overlay').style.display = 'block';
+    popup.style.display = 'flex';
+
+    company.innerText = `${interviewTargetJob.name} 인사팀`;
+
+    if (passed) {
+        // [합격 스타일]
+        card.className = "result-card-box theme-success";
+        icon.innerText = "🎉";
+        title.innerText = "최종 합격!";
+        msg.innerHTML = `축하합니다!<br>귀하를 <b>${interviewTargetJob.tier}</b> 등급 디자이너로<br>채용하고자 합니다.`;
+        subMsg.innerText = "";
+        
+        // 합격 데이터 저장
+        if(interviewCooldowns[interviewTargetJob.name]) delete interviewCooldowns[interviewTargetJob.name];
         pendingOffer = { 
             name: interviewTargetJob.name, 
             score: player.bestPortfolioScore, 
             newTier: interviewTargetJob.tier 
         };
-        document.getElementById('offer-company-name').innerText = interviewTargetJob.name;
-        openPopup('offer-popup');
+
+        // 버튼: 입사하기
+        btnArea.innerHTML = `
+            <button class="full-btn" onclick="acceptOffer()" style="background:#3182F6;">
+                서명하고 입사하기
+            </button>
+        `;
         
+        // 효과음
+        if(isSoundOn && soundEnding) soundEnding.play();
+
     } else {
-        // 불합격 처리
-        player.hp = Math.max(0, player.hp - 20); 
+        // [불합격 스타일]
+        card.className = "result-card-box theme-fail";
+        icon.innerText = "😭";
+        title.innerText = "불합격 통보";
+        msg.innerHTML = `아쉽게도 이번 채용에서는<br>귀하를 모시지 못하게 되었습니다.<br><br>"${failReason}"`;
         
-        let penaltyTime = 3 * 60 * 1000; // 3분 쿨타임
+        // 페널티 적용
+        player.hp = Math.max(0, player.hp - 30);
+        let penaltyTime = 3 * 60 * 1000;
         interviewCooldowns[interviewTargetJob.name] = Date.now() + penaltyTime;
+        
+        subMsg.innerText = `(멘탈 -30, 3분간 재지원 불가)`;
 
-        // 탈락 사유 피드백
-        let reason = "";
-        if (interviewTargetJob.tier === 'Agency') {
-            reason = `열정이 조금 부족했습니다. (현재: ${interviewStats.P} / 합격선: 15)`;
-        } else {
-            let maxStat = Math.max(interviewStats.L, interviewStats.S);
-            if (maxStat < 18) {
-                reason = `확실한 강점 어필(18점↑)에 실패했습니다. (현재 최고: ${maxStat})`;
-            } else {
-                reason = "우리 회사와 인재상이 맞지 않습니다.";
-            }
-        }
-
-        alert(`[면접 탈락] 😭\n"${reason}"\n\n(HP -20, 3분간 재지원 불가 🚫)`);
-        updateUI();
+        // 버튼: 닫기
+        btnArea.innerHTML = `
+            <button class="full-btn" onclick="closePopup()" style="background:#454F5D;">
+                돌아가기
+            </button>
+        `;
     }
 }
 
@@ -4444,6 +6076,9 @@ sprite.setPosition(w / 2, h / 2 - (h * 0.02));
 
     // 4. 고정
     sprite.setScrollFactor(0);
+    // ★★★ [핵심] 여기서 강제로 보이게 만듭니다! ★★★
+    sprite.setVisible(true); 
+    sprite.setAlpha(1); // 혹시 투명도가 0일까봐 1로 강제 설정
 }
 if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js')
@@ -4519,60 +6154,82 @@ window.toggleCheatPanel = function() {
         btn.style.display = (btn.style.display === 'none') ? 'block' : 'none';
     });
 }
-// [수정] 디자인 어워드 (연봉 인상 X -> 일시불 상금 O)
-function triggerDesignAward() {
+// [수정] 디자인 어워드 (팝업 띄우기)
+// 기존 alert 방식 대신 전용 팝업을 띄웁니다.
+window.triggerDesignAward = function() {
     // 이번 시즌 최고 점수 확인
     let score = player.seasonBestScore || 0;
     
     // 점수별 등급 및 상금 산정
-    let title = "참가상";
+    let title = "참가상 (No Rank)";
     let prizeMoney = 0; 
     let icon = "📄";
+    let color = "#888"; // 기본 색상
 
     if (score >= 100000) { 
-        title = "🏆 그랑프리 (대상)"; 
-        prizeMoney = 500000000; // 5억
-        icon = "🤴"; 
-    }
-    else if (score >= 50000) { 
+        title = "🏆 대상 (Grand Prix)"; 
+        prizeMoney = 500000000; icon = "👑"; color = "#FFD700"; // 골드
+    } else if (score >= 50000) { 
         title = "🥇 금상 (Gold)"; 
-        prizeMoney = 200000000; // 2억
-        icon = "🥇"; 
-    }
-    else if (score >= 10000) { 
+        prizeMoney = 200000000; icon = "🥇"; color = "#FFD700";
+    } else if (score >= 10000) { 
         title = "🥈 은상 (Silver)"; 
-        prizeMoney = 50000000; // 5천만
-        icon = "🥈"; 
-    }
-    else if (score >= 3000) { 
+        prizeMoney = 50000000; icon = "🥈"; color = "#C0C0C0"; // 실버
+    } else if (score >= 3000) { 
         title = "🥉 동상 (Bronze)"; 
-        prizeMoney = 10000000; // 1천만
-        icon = "🥉"; 
+        prizeMoney = 10000000; icon = "🥉"; color = "#CD7F32"; // 브론즈
     }
 
-    // 상금 지급 처리
+    // 1. 팝업 내용 채우기
+    document.getElementById('award-icon').innerText = icon;
+    document.getElementById('award-title').innerText = title;
+    document.getElementById('award-title').style.color = color; // 등급별 색상 적용
+    document.getElementById('award-score-val').innerText = score.toLocaleString();
+    
+    const prizeEl = document.getElementById('award-money');
     if (prizeMoney > 0) {
-        player.money += prizeMoney;
+        prizeEl.innerText = `₩ ${prizeMoney.toLocaleString()}`;
+        // 버튼에 데이터 심어두기 (클릭 시 수령)
+        document.querySelector('.award-btn').setAttribute('data-prize', prizeMoney);
+        document.querySelector('.award-btn').innerText = "상금 수령하기";
+        document.querySelector('.award-btn').disabled = false;
+        
+        // 팡파레 효과음 (엔딩음 활용)
+        if(isSoundOn && soundEnding) soundEnding.play();
+    } else {
+        prizeEl.innerText = "수상 실패";
+        document.querySelector('.award-btn').setAttribute('data-prize', 0);
+        document.querySelector('.award-btn').innerText = "다음 기회에...";
     }
 
-    // 시즌 점수 초기화
+    // 2. 팝업 열기
+    document.getElementById('award-popup').style.display = 'flex';
+};
+
+// [신규] 상금 수령 버튼 클릭 시 실행
+window.claimAward = function() {
+    const btn = document.querySelector('.award-btn');
+    const prize = parseInt(btn.getAttribute('data-prize') || 0);
+
+    // 1. 돈 지급
+    if (prize > 0) {
+        player.money += prize;
+        showFloatingText(180, 300, `+${prize.toLocaleString()}원`, '#FFD700'); // 돈 획득 연출
+    }
+
+    // 2. 시즌 점수 초기화
     player.seasonBestScore = 0;
 
-    // 알림 메시지
-    let msg = `✨ [연례 디자인 어워드] 결과 발표 ✨\n\n`;
-    msg += `나의 최고 점수: ${score.toLocaleString()}점\n`;
-    msg += `결과: ${icon} [${title}] 수상!\n\n`;
+    // 3. 팝업 닫기
+    document.getElementById('award-popup').style.display = 'none';
     
-    if (prizeMoney > 0) {
-        msg += `축하합니다! 상금 ${prizeMoney.toLocaleString()}원이 지급되었습니다.\n`;
-        msg += `(명예와 부를 모두 거머쥐셨군요!)`;
-    } else {
-        msg += `아쉽게도 수상권에 들지 못했습니다.\n내년에는 더 분발하세요!`;
-    }
-
-    alert(msg);
-    updateUI(); // 돈이 들어왔으니 UI 갱신
-}
+    // 4. 저장 및 UI 갱신
+    saveGameData();
+    updateUI();
+    
+    // 5. 토스 랭킹 점수 갱신 (상금 먹어서 총점 올랐으니까)
+    if(window.submitTossScore) window.submitTossScore();
+};
 
 // [복구] 급여 계산 (어워드 영구 인상 로직 삭제됨)
 function updateSalary() {
@@ -4585,6 +6242,797 @@ function updateSalary() {
 
     player.salary = Math.floor(base * multi * buffMult);
 }
+// [신규] 면접 결과 발표 전 긴장감 조성 함수
+function playInterviewSuspense() {
+    const overlay = document.getElementById('suspense-overlay');
+    const txt = document.getElementById('suspense-text');
+    const heart = overlay.querySelector('div:first-child');
+    
+    // 1. 오버레이 켜기
+    // 기존 면접 팝업은 닫지 않고 그 위에 덮습니다 (더 자연스러움)
+    overlay.style.display = 'flex';
+    heart.classList.add('heart-effect'); // 쿵쿵 애니메이션 시작
+
+    // 2. 긴장되는 멘트 시퀀스
+    const suspenseMsgs = [
+        "면접관들이 서로 눈빛을 교환합니다...", 
+        "당신의 답변을 다시 체크 중...", 
+        "인사팀장이 고개를 끄덕입니다...", 
+        "채용 담당자가 펜을 들었습니다!", 
+        "과연 결과는...?"
+    ];
+
+    let step = 0;
+    
+    // 첫 멘트
+    txt.innerText = suspenseMsgs[0];
+
+    // 3. 1초마다 멘트 변경 (총 3초 대기)
+    let iv = setInterval(() => {
+        step++;
+        if (step < 3) { // 3단계까지만 보여줌
+            // 랜덤 멘트 출력으로 지루함 방지
+            const msg = suspenseMsgs[Math.floor(Math.random() * suspenseMsgs.length)];
+            txt.innerText = msg;
+        } else {
+            // 4. 종료 및 결과 발표
+            clearInterval(iv);
+            overlay.style.display = 'none';
+            heart.classList.remove('heart-effect');
+            
+            // ★ 여기서 진짜 결과 함수를 호출!
+            finishInterview(); 
+        }
+    }, 1200); // 1.2초 간격
+}
+// [교체] 결과 팝업 열기 (이모지 로직 제거됨)
+window.openResultPopup = function(type, title, desc, stats) {
+    const popup = document.getElementById('result-popup');
+    const card = popup.querySelector('.result-card');
+    const stamp = document.getElementById('result-stamp'); // 도장
+    const statBox = document.getElementById('result-stat-box');
+
+    // 1. 초기화 (클래스 리셋)
+    card.classList.remove('res-success', 'res-fail');
+    
+    // 애니메이션 재실행을 위한 꼼수 (도장 쾅!)
+    stamp.style.animation = 'none';
+    stamp.offsetHeight; /* 리플로우 */
+    stamp.style.animation = 'stampCrash 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+    // 2. 타입별 설정
+    if (type === 'success') {
+        card.classList.add('res-success');
+        stamp.innerText = "APPROVED"; // 성공 도장
+    } else {
+        card.classList.add('res-fail');
+        stamp.innerText = "REJECTED"; // 실패 도장
+    }
+
+    // 3. 텍스트 채우기 (중앙 정렬은 CSS가 담당)
+    document.getElementById('result-title').innerText = title;
+    
+    // 4. 점수표 채우기
+    statBox.innerHTML = '';
+    stats.forEach(s => {
+        let color = s.val.toString().includes('-') ? '#FF5F5F' : '#4CD964';
+        if(s.color) color = s.color;
+        
+        statBox.innerHTML += `
+            <div class="stat-row">
+                <span style="color:#8B95A1;">${s.label}</span>
+                <span style="color:${color}; font-weight:700;">${s.val}</span>
+            </div>
+        `;
+    });
+
+    openPopup('result-popup');
+};
+
+// [수정] 결과 팝업 닫기 (광고 없이 즉시 진행)
+window.closeResultPopup = function() {
+    // 1. 팝업 닫기
+    const popup = document.getElementById('result-popup');
+    if(popup) popup.style.display = 'none';
+    closePopup(); // 배경(오버레이) 닫기
+
+    // 2. 후처리 (다음 단계 진행)
+    if (player.isPhase2) {
+        // 프로젝트가 비어있으면(완료했거나 AI한테 져서 삭제됨) 새 프로젝트 할당
+        if (!player.currentProject) {
+            console.log("새 프로젝트 할당 시작...");
+            assignProject(); // 새 업무 받기
+            
+            // 시간 경과 (주차 넘어감)
+            addTime(true); 
+        }
+        // UI 갱신
+        updateUI();
+    } else {
+        // 페이즈 1이면 그냥 저장하고 끝
+        saveGameData();
+        updateUI();
+    }
+};
+
+// [수정] AI 컷신 실행 (이미지 로딩 버그 수정)
+function showRivalIntro(targetScore) {
+    const layer = document.getElementById('rival-intro-layer');
+    const img = layer.querySelector('.rival-bg-img'); // 이미지 요소
+    const textBox = document.getElementById('rival-typing-text');
+    const scoreBox = document.getElementById('rival-intro-target');
+    
+    // 1. 화면 켜기
+    layer.style.display = 'block';
+    layer.style.opacity = "1"; // 투명도 확실히 복구
+    scoreBox.innerText = targetScore.toLocaleString();
+    
+    // 2. [핵심] 이미지 애니메이션 강제 리셋 (버그 수정)
+    // 기존 애니메이션 클래스를 제거했다가 다시 붙여서 처음부터 재생되게 함
+    img.style.animation = 'none';
+    img.offsetHeight; /* 리플로우 강제 (브라우저가 스타일 변경을 인식하게 함) */
+    img.style.animation = 'dramaFadeIn 2s forwards, slowZoom 10s infinite alternate';
+    img.style.opacity = "0"; // 시작은 투명하게
+
+    // 3. AI 대사 리스트
+    const lines = [
+        "검토 결과, 인간의 승률은 0.002% 입니다.\n포기하시겠습니까?",
+        "효율성 제로의 유기체여...\n나의 연산 속도를 따라올 수 있겠나?",
+        "데이터 분석 완료. 너의 패턴은 단순하군.\n압도적인 차이를 보여주지.",
+        "감정 따위가 디자인에 필요할까?\n완벽한 논리의 미학을 가르쳐주마."
+    ];
+    const text = lines[Math.floor(Math.random() * lines.length)];
+    
+    // 4. 타이핑 효과
+    textBox.innerText = "";
+    let i = 0;
+    if (window.rivalTypingIv) clearInterval(window.rivalTypingIv);
+    
+    setTimeout(() => {
+        window.rivalTypingIv = setInterval(() => {
+            textBox.innerText += text.charAt(i);
+            i++;
+            if (i >= text.length) clearInterval(window.rivalTypingIv);
+        }, 50);
+    }, 1000);
+}
+// 경고창 열기 (assignProject에서 호출)
+window.openRivalWarningPopup = function(targetScore) {
+    pendingRivalTarget = targetScore; // 점수 임시 저장
+    
+    // 팝업 열기
+    const popup = document.getElementById('rival-warning-popup');
+    popup.style.display = 'flex';
+    
+// ▼▼▼ [음악 교체 로직] ▼▼▼
+    if (isSoundOn) {
+        // 1. 현재 재생 중인 음악(사무실 BGM) 일시정지
+        if (currentBgm && currentBgm.isPlaying) {
+            currentBgm.pause();
+        }
+
+        // 2. AI 테마곡 재생
+        if (soundAI) {
+            soundAI.currentTime = 0; // 처음부터
+            soundAI.play();
+            currentBgm = soundAI; // ★ 현재 BGM을 AI로 교체 (백그라운드 갔다 와도 이게 재생됨)
+        }
+    }
+};
+
+// 경고창 확인 버튼 클릭 시 -> 컷신으로 이동
+window.confirmRivalWarning = function() {
+    document.getElementById('rival-warning-popup').style.display = 'none';
+    
+    // 저장해둔 점수를 들고 컷신 시작
+    showRivalIntro(pendingRivalTarget);
+};
+// [수정] 컷신 닫기 (음악 원상복구 추가)
+window.closeRivalIntro = function() {
+    console.log("도전 수락 버튼 클릭됨"); 
+    
+    const layer = document.getElementById('rival-intro-layer');
+    if (!layer) return;
+
+    if (window.rivalTypingIv) {
+        clearInterval(window.rivalTypingIv);
+        window.rivalTypingIv = null;
+    }
+
+    // 부드럽게 사라지기
+    layer.style.transition = "opacity 0.5s";
+    layer.style.opacity = "0";
+    
+    setTimeout(() => {
+        layer.style.display = 'none';
+        layer.style.opacity = "1"; 
+        layer.style.transition = ""; 
+        
+        updateUI();
+
+        // ▼▼▼ [음악 복구 로직] ▼▼▼
+        if (isSoundOn) {
+            // 1. AI 음악 정지
+            if (soundAI) soundAI.stop();
+
+            // 2. 사무실 음악(Phase 2) 다시 재생
+            if (soundP2) {
+                soundP2.play();
+                currentBgm = soundP2; // ★ 현재 BGM 복구
+            }
+        }
+
+    }, 500);
+};
+
+// [재정의] AI 컷신 열기 함수 (안전장치 포함)
+window.showRivalIntro = function(targetScore) {
+    const layer = document.getElementById('rival-intro-layer');
+    const img = layer.querySelector('.rival-bg-img'); 
+    const textBox = document.getElementById('rival-typing-text');
+    const scoreBox = document.getElementById('rival-intro-target');
+    
+    // 1. 화면 켜기
+    layer.style.display = 'block';
+    layer.style.opacity = "1";
+    scoreBox.innerText = targetScore.toLocaleString();
+    
+    // 2. 이미지 애니메이션 리셋 (버그 방지)
+    if(img) {
+        img.style.animation = 'none';
+        img.offsetHeight; /* 리플로우 */
+        img.style.animation = 'dramaFadeIn 2s forwards, slowZoom 10s infinite alternate';
+        img.style.opacity = "0"; 
+    }
+
+    // 3. AI 대사
+    const lines = [
+        "검토 결과, 인간의 승률은 0.002% 입니다.\n포기하시겠습니까?",
+        "효율성 제로의 유기체여...\n나의 연산 속도를 따라올 수 있겠나?",
+        "데이터 분석 완료. 너의 패턴은 단순하군.\n압도적인 차이를 보여주지.",
+        "감정 따위가 디자인에 필요할까?\n완벽한 논리의 미학을 가르쳐주마."
+    ];
+    const text = lines[Math.floor(Math.random() * lines.length)];
+    
+    // 4. 타이핑 효과
+    textBox.innerText = "";
+    let i = 0;
+    if (window.rivalTypingIv) clearInterval(window.rivalTypingIv);
+    
+    // 1초 뒤(이미지가 좀 밝아진 뒤) 타이핑 시작
+    setTimeout(() => {
+        window.rivalTypingIv = setInterval(() => {
+            if(!textBox) return;
+            textBox.innerText += text.charAt(i);
+            i++;
+            if (i >= text.length) clearInterval(window.rivalTypingIv);
+        }, 50);
+    }, 1000);
+};
+
+// ========================================================
+// 🎯 [통합 수정] 알바 돌발 미션 (1px 중앙 정렬) 완벽 수정판
+// ========================================================
+
+// 전역 변수 재선언 (기존 변수 충돌 방지 및 초기화)
+var miniGameId = null;   
+var gameDirection = 1;   
+var gamePosition = 0;    
+var isGameRunning = false;
+
+// [수정] 게임 시작 (배경 어둡게 처리 추가)
+window.startMiniGame = function() {
+    // 1. 체력 체크
+    if(typeof player !== 'undefined' && player.hp < 20) {
+        return alert("체력이 부족합니다. (필요: 20)");
+    }
+
+    // 2. 기존 팝업(알바 선택창) 닫기
+    closePopup(); 
+
+    // 3. 데이터 갱신
+    if(typeof player !== 'undefined') {
+        player.hp -= 20;
+        player.workedThisWeek = true;
+        updateUI();
+    }
+
+    // 4. ★ [핵심] 배경 오버레이(어두운 막) 켜기!
+    document.getElementById('modal-overlay').style.display = 'block';
+
+    // 5. 미니게임 팝업 열기
+    const popup = document.getElementById('minigame-popup');
+    if(popup) popup.style.display = 'block';
+    
+    // UI 초기화
+    const msgBox = document.getElementById('minigame-msg');
+    if(msgBox) {
+        msgBox.innerText = "타이밍을 맞춰보세요!";
+        msgBox.style.color = "#333";
+    }
+
+    const btn = document.getElementById('minigame-action-btn');
+    if(btn) {
+        btn.innerText = "STOP!";
+        btn.onclick = stopMovingBlock; 
+        btn.disabled = false;
+    }
+    
+    // 리셋 및 시작
+    if (miniGameId) cancelAnimationFrame(miniGameId);
+    gamePosition = 0;
+    gameDirection = 1;
+    isGameRunning = true;
+    runGameLoop();
+};
+
+// 2. 애니메이션 루프 (무한 반복)
+function runGameLoop() {
+    if (!isGameRunning) return;
+
+    // 속도 계산 (안전장치: player나 stat이 없으면 기본 속도 2.5 적용)
+    let currentSpeed = 2.5; 
+    if (typeof player !== 'undefined' && player.designStat) {
+        currentSpeed = 2.5 + (player.designStat / 300);
+    }
+
+    // 위치 이동
+    gamePosition += currentSpeed * gameDirection;
+
+    // 벽 튕기기 (0 ~ 92%) - 박스 크기 고려해서 92%로 조정
+    if (gamePosition >= 92) { 
+        gamePosition = 92;
+        gameDirection = -1; // 왼쪽으로
+    } else if (gamePosition <= 0) { 
+        gamePosition = 0;
+        gameDirection = 1; // 오른쪽으로
+    }
+
+    // 화면 그리기 (DOM 업데이트)
+    const block = document.getElementById('moving-block');
+    if (block) {
+        block.style.left = gamePosition + '%';
+    } else {
+        console.error("❌ 'moving-block' 요소를 찾을 수 없습니다.");
+        isGameRunning = false;
+        return;
+    }
+
+    // 다음 프레임 요청
+    miniGameId = requestAnimationFrame(runGameLoop);
+}
+
+// [수정] 정지 및 결과 판정 (닫을 때 배경 끄기 추가)
+window.stopMovingBlock = function() {
+    isGameRunning = false;
+    if(miniGameId) cancelAnimationFrame(miniGameId);
+    
+    const btn = document.getElementById('minigame-action-btn');
+    if(btn) btn.disabled = true;
+
+    // 판정
+    const target = 47; 
+    const diff = Math.abs(gamePosition - target);
+    const msgBox = document.getElementById('minigame-msg');
+    
+    // 결과 확인
+    if (diff < 5.0) { 
+        let bonus = 70000;
+        if(typeof player !== 'undefined') {
+            player.money += bonus;
+            player.designStat += 5;
+        }
+        
+        if(msgBox) {
+            msgBox.innerText = `✅ 납품 성공! (+7만원 / 감각+5)`;
+            msgBox.style.color = "#4CD964";
+        }
+        if(typeof showFloatingText === 'function') showFloatingText(180, 230, "+70,000원", "#FFD700");
+
+    } else {
+        if(msgBox) {
+            msgBox.innerText = `💥 납품 거절당함... (수익 0원)`;
+            msgBox.style.color = "#FF5F5F";
+        }
+        if(typeof showFloatingText === 'function') showFloatingText(180, 230, "FAIL...", "#FF5F5F");
+    }
+    
+    if(typeof updateUI === 'function') updateUI();
+    if(typeof saveGameData === 'function') saveGameData();
+    if(typeof addTime === 'function') addTime(); 
+
+    // 버튼을 '닫기'로 변경
+    if(btn) {
+        btn.innerText = "닫기";
+        btn.disabled = false;
+        
+        // ★ [닫기 클릭 이벤트]
+        btn.onclick = function() {
+            // 팝업 닫기
+            document.getElementById('minigame-popup').style.display = 'none';
+            // ★ [핵심] 배경 오버레이도 같이 끄기!
+            document.getElementById('modal-overlay').style.display = 'none';
+        };
+    }
+};
+
+// ========================================================
+// ⌨️ [통합] Ctrl+S 연타 게임 (경고 -> 게임 -> 결과)
+// ========================================================
+
+var crisisTimer = null;
+var saveProgress = 50; 
+var decreaseRate = 0.6; // 게이지 감소 속도
+
+// 1. [진입점] 위기 발생 (경고창 띄우기)
+// doProjectWork 함수에서 5% 확률로 이 함수를 호출합니다.
+window.startCrisisGame = function() {
+    console.log("⚠️ 위기 상황 발동: 경고창 오픈");
+
+    // 배경 오버레이(어두운 막) 켜기
+    const overlay = document.getElementById('modal-overlay');
+    if(overlay) overlay.style.display = 'block';
+    
+    // 혹시 켜져 있을지 모르는 게임창은 끄고
+    const gamePopup = document.getElementById('crisis-popup');
+    if(gamePopup) gamePopup.style.display = 'none';
+
+    // ★ 경고창(Warning Popup)을 먼저 켭니다
+    const warningPopup = document.getElementById('crisis-warning-popup');
+    if(warningPopup) warningPopup.style.display = 'flex';
+};
+
+// [수정] 게임 시작 및 난이도 설정
+window.realStartCrisis = function() {
+    console.log("🚨 게임 시작: 블루스크린 오픈");
+
+    document.getElementById('crisis-warning-popup').style.display = 'none';
+    const gamePopup = document.getElementById('crisis-popup');
+    if(gamePopup) gamePopup.style.display = 'block';
+
+    saveProgress = 50; 
+    
+    // ▼▼▼ [밸런스 수정 1] 감소 속도 상향 (0.8 -> 1.2) ▼▼▼
+    // 숫자가 클수록 더 빨리 떨어집니다. (1.5 넘어가면 너무 어려움)
+    decreaseRate = 1.0; 
+    
+    updateCrisisUI();
+
+    if(crisisTimer) clearInterval(crisisTimer);
+    crisisTimer = setInterval(crisisLoop, 50);
+};
+
+// 3. [루프] 시간 흐름에 따른 게이지 감소
+function crisisLoop() {
+    saveProgress -= decreaseRate;
+    
+    // 실패 조건 (0 이하)
+    if (saveProgress <= 0) {
+        saveProgress = 0;
+        endCrisis(false); // 실패 처리
+        return;
+    }
+    
+    updateCrisisUI();
+}
+
+// [수정] 버튼 연타 (장비빨 제거 -> 100% 피지컬 승부)
+window.mashSaveButton = function() {
+    // ★ [핵심] 장비(currentPower) 변수 제거!
+    // 누구나 똑같이 한 번 클릭당 3.5%씩 차오릅니다.
+    // (감소 속도가 1.2이므로, 초당 7번 이상 연타해야 게이지가 올라갑니다!)
+    let power = 3.8; 
+    
+    saveProgress += power;
+
+    if (saveProgress >= 100) {
+        saveProgress = 100;
+        endCrisis(true); 
+        return;
+    }
+    
+    updateCrisisUI();
+};
+
+// 5. [UI] 화면 갱신
+function updateCrisisUI() {
+    const bar = document.getElementById('save-bar-fill');
+    const txt = document.getElementById('save-text');
+    
+    if(!bar || !txt) return;
+
+    // 표기용 정수 변환
+    let displayProg = Math.max(0, Math.min(100, Math.floor(saveProgress)));
+
+    bar.style.width = displayProg + "%";
+    txt.innerText = `SAVING... ${displayProg}%`;
+    
+    // 색상 변경 (30% 미만이면 빨간색 경고)
+    if(displayProg < 30) {
+        bar.style.backgroundColor = "#FF5F5F";
+    } else {
+        bar.style.backgroundColor = "#4CD964";
+    }
+}
+
+// [수정] 결과 처리 (성공 시 페이즈에 맞는 업무 복귀)
+function endCrisis(isSuccess) {
+    // 루프 정지
+    if(crisisTimer) clearInterval(crisisTimer);
+    
+    // 게임창 닫기
+    document.getElementById('crisis-popup').style.display = 'none';
+    
+    if (isSuccess) {
+        // [성공] 배경 끄고 정상 업무 복귀
+        document.getElementById('modal-overlay').style.display = 'none';
+        alert("휴... 저장에 성공했습니다! (작업 계속 진행)");
+        
+        // ★ [핵심] 페이즈에 따라 다른 업무 함수 호출
+        if (player.isPhase2) {
+            // [Phase 2] 사무실 업무 (realWork 호출)
+            // 기존 doP2Work의 비용/배율 계산 로직을 가져옴
+            let baseCost = 20; 
+            let mult = player.currentProject.costMult || 1.0;
+            let finalCost = Math.floor(baseCost * mult);
+            let strat = player.currentProject.strategyName || "일반";
+
+            // 사무실 컷신 실행
+            realWork(player.currentProject.progMult || 1.0, finalCost, strat);
+        } else {
+            // [Phase 1] 포트폴리오 작업 (processNormalWork 호출)
+            if(typeof processNormalWork === 'function') {
+                processNormalWork();
+            }
+        }
+    } else {
+        // [실패] 배경 유지하고 크래시(실패) 팝업 띄우기
+        const crashPopup = document.getElementById('crash-popup');
+        if(crashPopup) crashPopup.style.display = 'flex';
+    }
+}
+
+// [수정] 데이터 복구 (광고 시청 후 페이즈 분기)
+window.recoverCrash = function() {
+    const resumeWork = () => {
+        document.getElementById('crash-popup').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+        alert("백업 파일을 찾았습니다! 작업을 계속합니다.");
+        
+        // ★ [핵심] 여기서도 페이즈 분기 처리
+        if (player.isPhase2) {
+            let baseCost = 20; 
+            let mult = player.currentProject.costMult || 1.0;
+            let finalCost = Math.floor(baseCost * mult);
+            let strat = player.currentProject.strategyName || "복구됨";
+            
+            realWork(player.currentProject.progMult || 1.0, finalCost, strat);
+        } else {
+            if(typeof processNormalWork === 'function') processNormalWork();
+        }
+    };
+
+    if(typeof showAd === 'function') {
+   showAd('GAME_RESTORE', resumeWork);
+    } else {
+        alert("광고 로드 실패. 그냥 복구해드립니다.");
+        resumeWork();
+    }
+};
+
+// 8. [포기] 작업 취소 (패널티)
+window.acceptCrash = function() {
+    document.getElementById('crash-popup').style.display = 'none';
+    document.getElementById('modal-overlay').style.display = 'none';
+    
+    if(typeof player !== 'undefined') {
+        player.hp -= 30; // 체력만 날림
+    }
+    
+    if(typeof addTime === 'function') addTime();
+    
+    alert("프로그램이 강제 종료되었습니다.\n(체력 -30, 이번 작업 소득 없음)");
+    
+    if(typeof updateUI === 'function') updateUI();
+};
+
+// [수정] 급여 확인 버튼 (광고 없이 즉시 닫기)
+window.confirmPayday = function() {
+    closePopup(); // 팝업 닫기
+    updateAudioState('main'); // 소리 다시 켜기
+    console.log("💸 월급 수령 확인 완료");
+};
+
+// [수정] SSS급 강제 할당 테스트 (이미지 컷신 연동)
+window.testTrueEnding = function() {
+    if(!confirm("⚠️ SSS급 '특이점' 프로젝트를 강제로 할당받으시겠습니까?")) return;
+
+    // 1. 강제 환경 설정 (Phase 2, Space Tier)
+    if (!player.isPhase2) {
+        player.isPhase2 = true;
+        document.getElementById('ui-layer').style.display = 'none';
+        document.getElementById('phase2-ui-layer').style.display = 'flex';
+    }
+    player.tier = 'Space';
+    player.rank = 3; 
+    updateSalary();
+    setBgByTier('Space');
+
+    // 2. SSS급 프로젝트 데이터 주입
+    player.currentProject = {
+        name: "Project: Singularity (특이점)",
+        tier: 'SSS',
+        companyTier: 'Space',
+        originalTier: 'SSS',
+        progress: 0,
+        deadline: 15,
+        currentWeek: 0,
+        isExtended: false,
+        meetingDone: false,
+        progMult: 1.0,
+        costMult: 1.0,
+        strategyName: "미정",
+        buffType: 'all',
+        isRival: false,
+        rivalName: "",
+        rivalTarget: 0,
+        isMasterpiece: false,
+        isSingularity: true   // ★ 핵심 플래그
+    };
+
+    // 3. UI 갱신 및 로그
+    updateUI();
+    showP2Log("🌌 [Cheat] 최후의 프로젝트가 할당되었습니다.");
+    
+    // ▼▼▼ [수정] 텍스트 알림(alert) 제거 -> 이미지 컷신 함수 호출 ▼▼▼
+    if (typeof showSSSIntro === 'function') {
+        showSSSIntro(); // 컷신 재생!
+    } else {
+        console.error("showSSSIntro 함수를 찾을 수 없습니다.");
+        alert("컷신 함수가 없습니다.");
+    }
+};
+
+// [신규] 박물관 열기
+window.openMuseum = function() {
+    // 혹시 데이터가 없으면 초기화
+    if (!player.museum) player.museum = [];
+    renderMuseum();
+    openPopup('museum-popup');
+};
+
+// [수정] 박물관 렌더링 (빈 슬롯 멘트 구체화)
+window.renderMuseum = function() {
+    const grid = document.getElementById('museum-grid');
+    const countEl = document.getElementById('museum-count');
+    
+    if (!grid || !countEl) return;
+    
+    grid.innerHTML = '';
+    
+    // 현재 수집 개수
+    const currentCount = player.museum ? player.museum.length : 0;
+    countEl.innerText = currentCount;
+
+    // 10개 슬롯 그리기
+    for (let i = 0; i < 10; i++) {
+        const item = player.museum[i]; 
+        
+        if (item) {
+            // [획득 완료]
+            grid.innerHTML += `
+                <div class="museum-item acquired">
+                    <div class="artifact-icon">🏺</div>
+                    <div class="artifact-name">${item.name}</div>
+                    <div class="artifact-desc">"${item.desc || '전설의 유물'}"</div>
+                </div>
+            `;
+        } else {
+            // [미획득 - 힌트 강화]
+            grid.innerHTML += `
+                <div class="museum-item empty">
+                    <div class="artifact-icon" style="filter:grayscale(1); opacity:0.5;">🔒</div>
+                    <div class="artifact-name" style="color:#777;">[ 비어있음 ]</div>
+                    <div class="artifact-desc" style="color:#555;">
+                        Space 티어 진입 후<br>
+                        <span style="color:#888; font-weight:bold;">SS급 프로젝트</span> 발견
+                    </div>
+                </div>
+            `;
+        }
+    }
+};
+
+
+// [신규] SSS급 인트로 컷신 열기
+function showSSSIntro() {
+    const layer = document.getElementById('sss-intro-layer');
+    if (!layer) return;
+
+    // 1. UI 숨김 (몰입감)
+    document.getElementById('phase2-ui-layer').style.display = 'none';
+    
+    // 2. 컷신 표시
+    layer.style.display = 'flex';
+    
+    // 3. (선택사항) BGM 변경: AI 테마곡이 있다면 재생
+    if (isSoundOn && soundAI) {
+        if(currentBgm) currentBgm.stop();
+        soundAI.currentTime = 0;
+        soundAI.play();
+        currentBgm = soundAI;
+    }
+}
+
+// [신규] 컷신 닫고 게임 시작
+window.startSSSProject = function() {
+    const layer = document.getElementById('sss-intro-layer');
+    
+    // 1. 컷신 페이드 아웃
+    layer.style.transition = 'opacity 0.5s';
+    layer.style.opacity = '0';
+    
+    setTimeout(() => {
+        layer.style.display = 'none';
+        layer.style.opacity = '1'; // 다음을 위해 복구
+        layer.style.transition = '';
+
+        // 2. UI 복구
+        document.getElementById('phase2-ui-layer').style.display = 'flex';
+        
+        // 3. 로그 출력
+        showFloatingText(180, 300, "🔥 임무 시작!", "#FF5F5F");
+        // ▼▼▼ [추가] BGM 상태 갱신 호출 ▼▼▼
+        // 이제 프로젝트가 할당된 상태이므로, updateAudioState가
+        // 자동으로 SSS급 BGM을 감지하여 재생합니다.
+        updateAudioState('main');
+    }, 500);
+};
+
+// ========================================================
+// 🔒 [출시 모드] 모든 치트 및 테스트 버튼 일괄 숨기기 (자동)
+// ========================================================
+window.addEventListener('load', function() {
+    // 1. [치트 패널] ID로 찾아서 숨기기
+    const cheatPanel = document.getElementById('cheat-panel');
+    if (cheatPanel) {
+        cheatPanel.style.display = 'none';
+    }
+
+    // 2. [디버그 버튼] 클래스로 찾아서 숨기기 (엔딩 테스트 등)
+    const debugButtons = document.querySelectorAll('.debug-btn');
+    debugButtons.forEach(btn => {
+        btn.style.display = 'none';
+    });
+
+    // 3. [자동 탐색] onclick 코드에 'test'나 'cheat'가 들어간 모든 버튼 숨기기
+    // (숨겨진 곳에 있는 강제 이직 버튼 등을 싹 찾아서 처리)
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(btn => {
+        const action = btn.getAttribute('onclick');
+        if (action) {
+            const lowerAction = action.toLowerCase();
+            // 함수 이름에 'cheat', 'test', 'reset' 단어가 포함되어 있으면 숨김
+            if (lowerAction.includes('cheat') || 
+                lowerAction.includes('test') || 
+                lowerAction.includes('resetgamedata')) {
+                
+                // 설정 팝업 안에 있는 '초기화' 버튼은 제외하고 싶다면 조건 추가 가능
+                // 여기서는 안전하게 다 숨깁니다.
+                btn.style.display = 'none';
+            }
+        }
+    });
+
+    console.log("🚫 [배포 모드 적용] 모든 테스트/치트 기능이 화면에서 제거되었습니다.");
+});
+
+// 스크립트 맨 끝에 추가
+window.openTossLeaderboard = openTossLeaderboard;
+window.triggerDesignAward = triggerDesignAward;
+window.claimAward = claimAward;
+
+
  </script>
 </body>
 </html>
